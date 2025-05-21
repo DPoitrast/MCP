@@ -8,6 +8,9 @@ discoverable, versioned API that can be deployed to AWS Fargate.
 
 1. Install dependencies:
 
+   The database path can be configured via the `DATABASE_PATH` environment
+   variable. If not set it defaults to `mcp.db` inside the working directory.
+
    ```bash
    pip install -r requirements.txt
    ```
