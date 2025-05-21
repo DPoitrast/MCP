@@ -6,19 +6,25 @@ discoverable, versioned API that can be deployed to AWS Fargate.
 
 ## Running locally
 
-1. Seed the SQLite database:
+1. Install dependencies:
 
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+2. Seed the SQLite database:
+   
    ```bash
    python -m app.seed
    ```
 
-2. Start the API server:
+3. Start the API server:
 
    ```bash
    uvicorn app.main:app --reload
    ```
 
-3. Authenticate with the token `fake-super-secret-token` when calling the API.
+4. Authenticate with the token `fake-super-secret-token` when calling the API.
 
 The MCP discovery file is available at `model_context.yaml`.
 
