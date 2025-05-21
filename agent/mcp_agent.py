@@ -30,14 +30,24 @@ class MCPAgent:
 
     def list_herd(self, token: str) -> list:
         """Call the listHerd endpoint and return JSON data."""
-        tool = next((t for t in self.context.get('api', {}).get('tools', []) if t.get('name') == 'listHerd'), None)
+        tool = next(
+            (
+                t
+                for t in self.context.get("api", {}).get("tools", [])
+                if t.get("name") == "listHerd"
+            ),
+            None,
+        )
         if tool is None:
-            raise ValueError('listHerd tool not found in model context')
+            raise ValueError("listHerd tool not found in model context")
+        path = tool.get("path")
+        if not path:
+            raise ValueError("listHerd tool path not found in model context")
         import json
         from urllib import request, error
 
         req = request.Request(
-            self.base_url + tool['path'],
+            self.base_url + path,
             headers={
                 'Authorization': f'Bearer {token}',
             },
