@@ -1,0 +1,9 @@
+schema_version: 1
+api:
+  version: v1
+  tools:
+    - name: listHerd
+      method: GET
+      path: /api/v1/herd
+      description: Retrieve herd information
+      scopes: [herd.read]
