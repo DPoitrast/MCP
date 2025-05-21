@@ -32,7 +32,8 @@ python -m agent http://localhost:8000 --token fake-super-secret-token
 ```
 
 The agent reads `model_context.yaml` to discover the API path and returns the
-JSON response from the server.
+JSON response from the server. For full YAML support install the optional
+`PyYAML` dependency; otherwise a limited built-in parser is used.
 
 ## Running tests
 
