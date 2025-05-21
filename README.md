@@ -22,6 +22,18 @@ discoverable, versioned API that can be deployed to AWS Fargate.
 
 The MCP discovery file is available at `model_context.yaml`.
 
+## Using the agent
+
+An `agent` package is provided to interact with the MCP server. After the
+server is running you can list the herd data like so:
+
+```bash
+python -m agent http://localhost:8000 --token fake-super-secret-token
+```
+
+The agent reads `model_context.yaml` to discover the API path and returns the
+JSON response from the server.
+
 ## Running tests
 
 ```bash
