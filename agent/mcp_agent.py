@@ -1,3 +1,9 @@
+try:
+    import yaml  # type: ignore
+except Exception:  # pragma: no cover - optional dependency
+    yaml = None
+
+
 class MCPAgent:
     """Simple agent for interacting with the MCP API."""
 
@@ -7,23 +13,36 @@ class MCPAgent:
 
     @staticmethod
     def _parse_context(path: str) -> dict:
-        """Parse a tiny YAML file describing the API."""
+        """Parse the model context YAML file."""
+        if yaml is not None:
+            try:
+                with open(path, "r", encoding="utf-8") as f:
+                    data = yaml.safe_load(f) or {}
+                if not isinstance(data, dict):
+                    raise ValueError("Model context must be a mapping")
+                return data
+            except FileNotFoundError:
+                return {"api": {"tools": []}}
+            except yaml.YAMLError as exc:  # pragma: no cover - difficult to trigger
+                raise ValueError(f"Error parsing {path}: {exc}") from exc
+
+        # Fallback parser when PyYAML is not available
         context = {"api": {"tools": []}}
         try:
-            with open(path, 'r', encoding='utf-8') as f:
+            with open(path, "r", encoding="utf-8") as f:
                 tool = None
                 for raw_line in f:
                     line = raw_line.strip()
-                    if line.startswith('version:'):
-                        context.setdefault('api', {})['version'] = line.split(':', 1)[1].strip()
-                    elif line.startswith('- name:'):
-                        name = line.split(':', 1)[1].strip()
+                    if line.startswith("version:"):
+                        context.setdefault("api", {})["version"] = line.split(":", 1)[1].strip()
+                    elif line.startswith("- name:"):
+                        name = line.split(":", 1)[1].strip()
                         tool = {"name": name}
-                        context['api']['tools'].append(tool)
-                    elif line.startswith('method:') and tool is not None:
-                        tool['method'] = line.split(':', 1)[1].strip()
-                    elif line.startswith('path:') and tool is not None:
-                        tool['path'] = line.split(':', 1)[1].strip()
+                        context["api"]["tools"].append(tool)
+                    elif line.startswith("method:") and tool is not None:
+                        tool["method"] = line.split(":", 1)[1].strip()
+                    elif line.startswith("path:") and tool is not None:
+                        tool["path"] = line.split(":", 1)[1].strip()
         except FileNotFoundError:
             pass
         return context
