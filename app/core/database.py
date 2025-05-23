@@ -33,9 +33,13 @@ def init_db() -> None:
                 """
             )
             conn.execute("CREATE INDEX IF NOT EXISTS idx_herd_name ON herd(name)")
-            conn.execute("CREATE INDEX IF NOT EXISTS idx_herd_location ON herd(location)")
-            conn.execute("CREATE INDEX IF NOT EXISTS idx_herd_created_at ON herd(created_at)")
-            
+            conn.execute(
+                "CREATE INDEX IF NOT EXISTS idx_herd_location ON herd(location)"
+            )
+            conn.execute(
+                "CREATE INDEX IF NOT EXISTS idx_herd_created_at ON herd(created_at)"
+            )
+
             # Create trigger to update updated_at timestamp
             conn.execute(
                 """
@@ -46,7 +50,7 @@ def init_db() -> None:
                 END
                 """
             )
-            
+
             conn.commit()
             logger.info("Database tables and indexes created successfully")
     except sqlite3.Error as e:
@@ -60,19 +64,17 @@ def get_db() -> Generator[sqlite3.Connection, None, None]:
     conn = None
     try:
         conn = sqlite3.connect(
-            get_db_path(), 
-            timeout=settings.connection_timeout,
-            check_same_thread=False
+            get_db_path(), timeout=settings.connection_timeout, check_same_thread=False
         )
         conn.execute("PRAGMA foreign_keys = ON")
         conn.execute("PRAGMA journal_mode = WAL")  # Better concurrency
         conn.row_factory = sqlite3.Row
-        
+
         # Start transaction
         conn.execute("BEGIN")
         yield conn
         conn.commit()
-        
+
     except sqlite3.Error as e:
         if conn:
             conn.rollback()

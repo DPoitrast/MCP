@@ -11,7 +11,7 @@ class MCPAgent:
     """Simple agent for interacting with the MCP API."""
 
     def __init__(self, base_url: str, context_path: str = "model_context.yaml"):
-        self.base_url = base_url.rstrip('/')
+        self.base_url = base_url.rstrip("/")
         self.context = self._parse_context(context_path)
 
     @staticmethod
@@ -48,7 +48,9 @@ class MCPAgent:
                         except ValueError:
                             context["schema_version"] = value
                     if line.startswith("version:"):
-                        context.setdefault("api", {})["version"] = line.split(":", 1)[1].strip()
+                        context.setdefault("api", {})["version"] = line.split(":", 1)[
+                            1
+                        ].strip()
                     elif line.startswith("- name:"):
                         name = line.split(":", 1)[1].strip()
                         tool = {"name": name}
@@ -62,7 +64,9 @@ class MCPAgent:
                     elif line.startswith("scopes:") and tool is not None:
                         scopes_part = line.split(":", 1)[1].strip()
                         scopes_part = scopes_part.strip("[]")
-                        scopes = [s.strip() for s in scopes_part.split(',') if s.strip()]
+                        scopes = [
+                            s.strip() for s in scopes_part.split(",") if s.strip()
+                        ]
                         tool["scopes"] = scopes if scopes_part else []
         except FileNotFoundError:
             # If the file is not found, return the default context,
@@ -86,10 +90,10 @@ class MCPAgent:
         path = tool.get("path")
         if not path:
             raise ValueError("listHerd tool path not found in model context")
-        
+
         url = self.base_url + path
         headers = {
-            'Authorization': f'Bearer {token}',
+            "Authorization": f"Bearer {token}",
         }
 
         try:
@@ -97,7 +101,9 @@ class MCPAgent:
             response.raise_for_status()  # Raises HTTPError for 4XX/5XX responses
             return response.json()
         except requests.exceptions.HTTPError as exc:
-            raise RuntimeError(f'HTTP error {exc.response.status_code}: {exc.response.reason}')
+            raise RuntimeError(
+                f"HTTP error {exc.response.status_code}: {exc.response.reason}"
+            )
         except requests.exceptions.RequestException as exc:
             # This catches other exceptions like ConnectionError, Timeout, etc.
-            raise RuntimeError(f'Request error: {exc}')
+            raise RuntimeError(f"Request error: {exc}")

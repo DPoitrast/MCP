@@ -8,8 +8,14 @@ def seed():
     with get_db() as db:
         count = db.execute("SELECT COUNT(*) FROM herd").fetchone()[0]
         if count == 0:
-            db.execute("INSERT INTO herd (name, location) VALUES (?, ?)", ("Alpha Farm", "Wisconsin"))
-            db.execute("INSERT INTO herd (name, location) VALUES (?, ?)", ("Beta Farm", "California"))
+            db.execute(
+                "INSERT INTO herd (name, location) VALUES (?, ?)",
+                ("Alpha Farm", "Wisconsin"),
+            )
+            db.execute(
+                "INSERT INTO herd (name, location) VALUES (?, ?)",
+                ("Beta Farm", "California"),
+            )
             print("Database seeded with initial data")
         else:
             print(f"Database already contains {count} herds")

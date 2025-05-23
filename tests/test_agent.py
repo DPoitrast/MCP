@@ -2,9 +2,10 @@ import textwrap
 import pytest
 import json
 from unittest import mock
-import requests # For requests.exceptions
+import requests  # For requests.exceptions
 
 from agent.mcp_agent import MCPAgent
+
 
 # Keep existing test
 def test_list_herd_missing_path(tmp_path):
@@ -24,6 +25,7 @@ def test_list_herd_missing_path(tmp_path):
     agent = MCPAgent("http://example.com", context_path=str(context_file))
     with pytest.raises(ValueError, match="listHerd tool path not found"):
         agent.list_herd("token")
+
 
 class TestParseContextFallback:
     def test_parse_fallback_minimal_version_only(self, tmp_path):
@@ -114,7 +116,7 @@ class TestParseContextFallback:
             }
         }
         assert context == expected
-        
+
     def test_parse_fallback_tool_with_name_only(self, tmp_path):
         context_file = tmp_path / "context.yaml"
         content = textwrap.dedent(
@@ -128,20 +130,14 @@ class TestParseContextFallback:
         )
         context_file.write_text(content)
         context = MCPAgent._parse_context_fallback(str(context_file))
-        expected = {
-            "api": {
-                "version": "v1",
-                "tools": [{"name": "listHerd"}] 
-            }
-        }
+        expected = {"api": {"version": "v1", "tools": [{"name": "listHerd"}]}}
         assert context == expected
-
 
     def test_parse_fallback_empty_file(self, tmp_path):
         context_file = tmp_path / "context.yaml"
-        context_file.write_text("") # Empty file
+        context_file.write_text("")  # Empty file
         context = MCPAgent._parse_context_fallback(str(context_file))
-        assert context == {"api": {"tools": []}} # Default context
+        assert context == {"api": {"tools": []}}  # Default context
 
     def test_parse_fallback_file_not_found(self):
         # Test _parse_context_fallback directly for non-existent file
@@ -153,7 +149,9 @@ def test_parse_context_constructor_file_not_found():
     # This test instantiates MCPAgent, which calls _parse_context.
     # _parse_context will use PyYAML if available, or _parse_context_fallback otherwise.
     # Both should handle FileNotFoundError by returning the default context.
-    agent = MCPAgent("http://example.com", context_path="non_existent_file_for_sure.yaml")
+    agent = MCPAgent(
+        "http://example.com", context_path="non_existent_file_for_sure.yaml"
+    )
     assert agent.context == {"api": {"tools": []}}
 
 
@@ -180,7 +178,7 @@ class TestListHerd:
         mock_response.status_code = 200
         mock_response.json.return_value = [{"id": 1, "name": "Sheepie"}]
         # mock_response.raise_for_status() will do nothing if status_code < 400
-        
+
         mock_get.return_value = mock_response
 
         result = valid_agent.list_herd("test_token_123")
@@ -188,7 +186,7 @@ class TestListHerd:
         assert result == [{"id": 1, "name": "Sheepie"}]
         mock_get.assert_called_once_with(
             "http://fakeapi.com/test/herd",
-            headers={'Authorization': 'Bearer test_token_123'}
+            headers={"Authorization": "Bearer test_token_123"},
         )
         mock_response.raise_for_status.assert_called_once()
 
@@ -197,19 +195,19 @@ class TestListHerd:
         mock_response = mock.Mock(spec=requests.Response)
         mock_response.status_code = 503
         mock_response.reason = "Service Unavailable"
-        
+
         # Configure raise_for_status to raise HTTPError
         http_error = requests.exceptions.HTTPError(response=mock_response)
         mock_response.raise_for_status.side_effect = http_error
-        
+
         mock_get.return_value = mock_response
 
         with pytest.raises(RuntimeError, match="HTTP error 503: Service Unavailable"):
             valid_agent.list_herd("test_token_456")
-        
+
         mock_get.assert_called_once_with(
             "http://fakeapi.com/test/herd",
-            headers={'Authorization': 'Bearer test_token_456'}
+            headers={"Authorization": "Bearer test_token_456"},
         )
         mock_response.raise_for_status.assert_called_once()
 
@@ -219,12 +217,14 @@ class TestListHerd:
         connection_error_msg = "Failed to establish a new connection"
         mock_get.side_effect = requests.exceptions.ConnectionError(connection_error_msg)
 
-        with pytest.raises(RuntimeError, match=f"Request error: {connection_error_msg}"):
+        with pytest.raises(
+            RuntimeError, match=f"Request error: {connection_error_msg}"
+        ):
             valid_agent.list_herd("test_token_789")
-        
+
         mock_get.assert_called_once_with(
             "http://fakeapi.com/test/herd",
-            headers={'Authorization': 'Bearer test_token_789'}
+            headers={"Authorization": "Bearer test_token_789"},
         )
 
     def test_list_herd_tool_not_in_context(self, tmp_path):
@@ -242,6 +242,10 @@ class TestListHerd:
                 """
             )
         )
-        agent_no_listherd = MCPAgent("http://example.com", context_path=str(context_file))
-        with pytest.raises(ValueError, match="listHerd tool not found in model context"):
+        agent_no_listherd = MCPAgent(
+            "http://example.com", context_path=str(context_file)
+        )
+        with pytest.raises(
+            ValueError, match="listHerd tool not found in model context"
+        ):
             agent_no_listherd.list_herd("a_token")

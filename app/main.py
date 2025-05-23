@@ -13,14 +13,14 @@ from .exceptions import MCPException
 # Configure logging
 logging.basicConfig(
     level=getattr(logging, settings.log_level.upper()),
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
 )
 logger = logging.getLogger(__name__)
 
 
 def create_application() -> FastAPI:
     """Create and configure the FastAPI application."""
-    
+
     # Initialize database
     try:
         init_db()
@@ -28,16 +28,18 @@ def create_application() -> FastAPI:
     except Exception as e:
         logger.error(f"Failed to initialize database: {e}")
         raise
-    
+
     # Create FastAPI app
     app = FastAPI(
         title=settings.title,
         description=settings.description,
         version=settings.version,
         debug=settings.debug,
-        openapi_url=f"{settings.api_v1_prefix}/openapi.json" if settings.debug else None,
+        openapi_url=(
+            f"{settings.api_v1_prefix}/openapi.json" if settings.debug else None
+        ),
     )
-    
+
     # Add CORS middleware
     app.add_middleware(
         CORSMiddleware,
@@ -46,10 +48,10 @@ def create_application() -> FastAPI:
         allow_methods=["*"],
         allow_headers=["*"],
     )
-    
+
     # Include API router
     app.include_router(api_router, prefix=settings.api_v1_prefix)
-    
+
     # Add global exception handlers
     @app.exception_handler(MCPException)
     async def mcp_exception_handler(request: Request, exc: MCPException):
@@ -60,10 +62,10 @@ def create_application() -> FastAPI:
             content={
                 "detail": exc.message,
                 "error_code": exc.error_code,
-                "type": "business_error"
-            }
+                "type": "business_error",
+            },
         )
-    
+
     @app.exception_handler(Exception)
     async def global_exception_handler(request: Request, exc: Exception):
         """Handle unexpected exceptions."""
@@ -73,22 +75,22 @@ def create_application() -> FastAPI:
             content={
                 "detail": "Internal server error",
                 "error_id": str(id(exc)),
-                "type": "internal_error"
-            }
+                "type": "internal_error",
+            },
         )
-    
+
     @app.on_event("startup")
     async def startup_event():
         """Application startup event."""
         logger.info(f"Starting {settings.title} v{settings.version}")
         logger.info(f"Environment: {settings.environment}")
         logger.info(f"Debug mode: {settings.debug}")
-    
+
     @app.on_event("shutdown")
     async def shutdown_event():
         """Application shutdown event."""
         logger.info("Shutting down application")
-    
+
     return app
 
 
