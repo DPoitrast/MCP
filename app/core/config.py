@@ -32,7 +32,7 @@ class Settings(BaseSettings):
 
     # Environment
     environment: str = Field(default="development", env="ENVIRONMENT")
-    debug: bool = Field(default=False, env="DEBUG")
+    debug: bool = Field(default=True, env="DEBUG")
 
     class Config:
         env_file = ".env"
