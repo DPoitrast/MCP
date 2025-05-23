@@ -300,32 +300,3 @@ async def delete_herd(
     except Exception as e:
         logger.error(f"Unexpected error in delete_herd: {e}")
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Internal server error")
-
-
-@router.get("/herd/stats", tags=["herd"])
-async def get_herd_statistics(
-    db: Connection = Depends(Database),
-    herd_service: HerdService = Depends(HerdServiceDep),
-    current_user: dict = CurrentUser
-):
-    """
-    Get statistics about herds.
-    
-    Args:
-        db: Database connection
-        herd_service: Herd service instance
-        current_user: Current authenticated user
-    
-    Returns:
-        dict: Statistics about herds
-    """
-    try:
-        stats = herd_service.get_herd_statistics(db)
-        logger.info(f"User {current_user.get('sub')} retrieved herd statistics")
-        return stats
-    except DatabaseError as e:
-        logger.error(f"Database error in get_herd_statistics: {e.message}")
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to retrieve statistics")
-    except Exception as e:
-        logger.error(f"Unexpected error in get_herd_statistics: {e}")
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Internal server error")
