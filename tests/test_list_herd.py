@@ -31,6 +31,16 @@ def test_list_herd():
     )
     assert response.status_code == 200
     data = response.json()
-    assert isinstance(data, list)
-    assert len(data) >= 2
-    assert {"id": 1, "name": "Alpha Farm", "location": "Wisconsin"} in data
+    assert isinstance(data, dict)
+    assert "items" in data
+    assert "total" in data
+    assert "skip" in data
+    assert "limit" in data
+    assert isinstance(data["items"], list)
+    assert len(data["items"]) >= 2
+    assert data["total"] >= 2
+    
+    # Check that the herds are in the items
+    herd_names = [herd["name"] for herd in data["items"]]
+    assert "Alpha Farm" in herd_names
+    assert "Beta Farm" in herd_names

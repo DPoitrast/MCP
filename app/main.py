@@ -1,132 +1,96 @@
+"""FastAPI application with clean architecture."""
+
 import logging
-from fastapi import Depends, FastAPI, HTTPException, Request, status
+from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
-from fastapi.security import OAuth2PasswordBearer
+from fastapi.middleware.cors import CORSMiddleware
 
-from . import crud, models, schemas
-from .database import get_db, init_db
+from .api.v1.api import api_router
+from .core.config import settings
+from .core.database import init_db
+from .exceptions import MCPException
 
-logging.basicConfig(level=logging.INFO)
+# Configure logging
+logging.basicConfig(
+    level=getattr(logging, settings.log_level.upper()),
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+)
 logger = logging.getLogger(__name__)
 
-try:
-    init_db()
-    logger.info("Database initialized successfully")
-except Exception as e:
-    logger.error(f"Failed to initialize database: {e}")
-    raise
 
-app = FastAPI(title="MCP Server PoC")
-
-
-@app.exception_handler(Exception)
-async def global_exception_handler(request: Request, exc: Exception):
-    logger.error(f"Unhandled exception on {request.url}: {exc}", exc_info=True)
-    return JSONResponse(
-        status_code=500,
-        content={"detail": "Internal server error", "error_id": str(id(exc))}
+def create_application() -> FastAPI:
+    """Create and configure the FastAPI application."""
+    
+    # Initialize database
+    try:
+        init_db()
+        logger.info("Database initialized successfully")
+    except Exception as e:
+        logger.error(f"Failed to initialize database: {e}")
+        raise
+    
+    # Create FastAPI app
+    app = FastAPI(
+        title=settings.title,
+        description=settings.description,
+        version=settings.version,
+        debug=settings.debug,
+        openapi_url=f"{settings.api_v1_prefix}/openapi.json" if settings.debug else None,
     )
-
-
-@app.exception_handler(HTTPException)
-async def http_exception_handler(request: Request, exc: HTTPException):
-    logger.warning(f"HTTP exception on {request.url}: {exc.detail}")
-    return JSONResponse(
-        status_code=exc.status_code,
-        content={"detail": exc.detail}
+    
+    # Add CORS middleware
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=["*"] if settings.debug else [],
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
     )
-
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
-
-
-# Dummy token check for example purposes
-async def get_current_token(token: str = Depends(oauth2_scheme)):
-    if token != "fake-super-secret-token":
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid authentication credentials",
-            headers={"WWW-Authenticate": "Bearer"},
+    
+    # Include API router
+    app.include_router(api_router, prefix=settings.api_v1_prefix)
+    
+    # Add global exception handlers
+    @app.exception_handler(MCPException)
+    async def mcp_exception_handler(request: Request, exc: MCPException):
+        """Handle custom MCP exceptions."""
+        logger.warning(f"MCP exception on {request.url}: {exc.message}")
+        return JSONResponse(
+            status_code=400,
+            content={
+                "detail": exc.message,
+                "error_code": exc.error_code,
+                "type": "business_error"
+            }
         )
-    return token
-
-
-@app.get("/health")
-async def health_check():
-    """Health check endpoint for monitoring service status."""
-    try:
-        with get_db() as db:
-            db.execute("SELECT 1")
-        return {"status": "healthy", "database": "connected"}
-    except Exception as e:
-        logger.error(f"Health check failed: {e}")
-        raise HTTPException(status_code=503, detail="Service unavailable")
-
-
-@app.get("/api/v1/herd", response_model=list[schemas.Herd])
-async def list_herd(skip: int = 0, limit: int = 100, token: str = Depends(get_current_token)):
-    """List herds with pagination support."""
-    if skip < 0:
-        raise HTTPException(status_code=400, detail="Skip must be non-negative")
-    if limit <= 0 or limit > 1000:
-        raise HTTPException(status_code=400, detail="Limit must be between 1 and 1000")
     
-    try:
-        with get_db() as db:
-            herds = crud.get_herd(db, skip=skip, limit=limit)
-        logger.info(f"Listed {len(herds)} herds (skip={skip}, limit={limit})")
-        return herds
-    except Exception as e:
-        logger.error(f"Failed to list herds: {e}")
-        raise HTTPException(status_code=500, detail="Failed to retrieve herds")
-
-
-@app.get("/api/v1/herd/{herd_id}", response_model=schemas.Herd)
-async def get_herd(herd_id: int, token: str = Depends(get_current_token)):
-    """Get a specific herd by ID."""
-    if herd_id <= 0:
-        raise HTTPException(status_code=400, detail="Herd ID must be positive")
+    @app.exception_handler(Exception)
+    async def global_exception_handler(request: Request, exc: Exception):
+        """Handle unexpected exceptions."""
+        logger.error(f"Unhandled exception on {request.url}: {exc}", exc_info=True)
+        return JSONResponse(
+            status_code=500,
+            content={
+                "detail": "Internal server error",
+                "error_id": str(id(exc)),
+                "type": "internal_error"
+            }
+        )
     
-    try:
-        with get_db() as db:
-            herd = crud.get_herd_by_id(db, herd_id)
-        if not herd:
-            raise HTTPException(status_code=404, detail="Herd not found")
-        logger.info(f"Retrieved herd {herd_id}")
-        return herd
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"Failed to get herd {herd_id}: {e}")
-        raise HTTPException(status_code=500, detail="Failed to retrieve herd")
-
-
-@app.post("/api/v1/herd", response_model=schemas.Herd, status_code=201)
-async def create_herd(herd: schemas.HerdCreate, token: str = Depends(get_current_token)):
-    """Create a new herd."""
-    try:
-        with get_db() as db:
-            new_herd = crud.create_herd(db, herd)
-        logger.info(f"Created herd {new_herd.id}: {new_herd.name}")
-        return new_herd
-    except Exception as e:
-        logger.error(f"Failed to create herd: {e}")
-        raise HTTPException(status_code=500, detail="Failed to create herd")
-
-
-@app.delete("/api/v1/herd/{herd_id}", status_code=204)
-async def delete_herd(herd_id: int, token: str = Depends(get_current_token)):
-    """Delete a herd by ID."""
-    if herd_id <= 0:
-        raise HTTPException(status_code=400, detail="Herd ID must be positive")
+    @app.on_event("startup")
+    async def startup_event():
+        """Application startup event."""
+        logger.info(f"Starting {settings.title} v{settings.version}")
+        logger.info(f"Environment: {settings.environment}")
+        logger.info(f"Debug mode: {settings.debug}")
     
-    try:
-        with get_db() as db:
-            deleted = crud.delete_herd(db, herd_id)
-        if not deleted:
-            raise HTTPException(status_code=404, detail="Herd not found")
-        logger.info(f"Deleted herd {herd_id}")
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"Failed to delete herd {herd_id}: {e}")
-        raise HTTPException(status_code=500, detail="Failed to delete herd")
+    @app.on_event("shutdown")
+    async def shutdown_event():
+        """Application shutdown event."""
+        logger.info("Shutting down application")
+    
+    return app
+
+
+# Create the app instance
+app = create_application()
