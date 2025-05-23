@@ -186,13 +186,17 @@ _client = SimpleNamespace(
     AuthTypes=_typing.Any,
 )
 
+# Add missing constants for compatibility
+USE_CLIENT_DEFAULT = _client.USE_CLIENT_DEFAULT
+
 __all__ = [
     "ByteStream",
-    "Response",
+    "Response", 
     "URL",
     "Request",
     "BaseTransport",
     "Client",
     "_types",
     "_client",
+    "USE_CLIENT_DEFAULT",
 ]

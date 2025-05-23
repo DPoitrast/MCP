@@ -40,55 +40,117 @@ class HerdService:
         self.validate_pagination(skip, limit)
 
         # Get herds and total count
-        herds = self.repository.get_all(db, skip, limit)
+        domain_herds = self.repository.get_all(db, skip, limit)
         total = self.repository.count(db)
 
+        # Convert domain models to Pydantic models
+        from ..schemas import Herd as HerdSchema
+        pydantic_herds = [
+            HerdSchema(
+                id=herd.id,
+                name=herd.name,
+                location=herd.location,
+                created_at=herd.created_at,
+                updated_at=herd.updated_at
+            )
+            for herd in domain_herds
+        ]
+
         logger.info(
-            f"Retrieved {len(herds)} herds (skip={skip}, limit={limit}, total={total})"
+            f"Retrieved {len(pydantic_herds)} herds (skip={skip}, limit={limit}, total={total})"
         )
 
-        return HerdList(items=herds, total=total, skip=skip, limit=limit)
+        return HerdList(items=pydantic_herds, total=total, skip=skip, limit=limit)
 
-    def get_herd_by_id(self, db: Connection, herd_id: int) -> Herd:
+    def get_herd_by_id(self, db: Connection, herd_id: int):
         """Get a specific herd by ID."""
         if herd_id <= 0:
             raise ValidationError("herd_id", "Herd ID must be positive")
 
-        herd = self.repository.get_by_id(db, herd_id)
-        if not herd:
+        domain_herd = self.repository.get_by_id(db, herd_id)
+        if not domain_herd:
             raise HerdNotFoundError(herd_id)
 
-        logger.debug(f"Retrieved herd {herd_id}: {herd.name}")
-        return herd
+        # Convert domain model to Pydantic model
+        from ..schemas import Herd as HerdSchema
+        pydantic_herd = HerdSchema(
+            id=domain_herd.id,
+            name=domain_herd.name,
+            location=domain_herd.location,
+            created_at=domain_herd.created_at,
+            updated_at=domain_herd.updated_at
+        )
 
-    def search_herds_by_name(self, db: Connection, name: str) -> List[Herd]:
+        logger.debug(f"Retrieved herd {herd_id}: {pydantic_herd.name}")
+        return pydantic_herd
+
+    def search_herds_by_name(self, db: Connection, name: str):
         """Search herds by name (partial match)."""
         if not name or not name.strip():
             raise ValidationError("name", "Search name cannot be empty")
 
-        herds = self.repository.get_by_name(db, name.strip())
-        logger.debug(f"Found {len(herds)} herds matching name '{name}'")
-        return herds
+        domain_herds = self.repository.get_by_name(db, name.strip())
+        
+        # Convert domain models to Pydantic models
+        from ..schemas import Herd as HerdSchema
+        pydantic_herds = [
+            HerdSchema(
+                id=herd.id,
+                name=herd.name,
+                location=herd.location,
+                created_at=herd.created_at,
+                updated_at=herd.updated_at
+            )
+            for herd in domain_herds
+        ]
+        
+        logger.debug(f"Found {len(pydantic_herds)} herds matching name '{name}'")
+        return pydantic_herds
 
-    def search_herds_by_location(self, db: Connection, location: str) -> List[Herd]:
+    def search_herds_by_location(self, db: Connection, location: str):
         """Search herds by location (partial match)."""
         if not location or not location.strip():
             raise ValidationError("location", "Search location cannot be empty")
 
-        herds = self.repository.get_by_location(db, location.strip())
-        logger.debug(f"Found {len(herds)} herds matching location '{location}'")
-        return herds
+        domain_herds = self.repository.get_by_location(db, location.strip())
+        
+        # Convert domain models to Pydantic models
+        from ..schemas import Herd as HerdSchema
+        pydantic_herds = [
+            HerdSchema(
+                id=herd.id,
+                name=herd.name,
+                location=herd.location,
+                created_at=herd.created_at,
+                updated_at=herd.updated_at
+            )
+            for herd in domain_herds
+        ]
+        
+        logger.debug(f"Found {len(pydantic_herds)} herds matching location '{location}'")
+        return pydantic_herds
 
-    def create_herd(self, db: Connection, herd_data: HerdCreate) -> Herd:
+    def create_herd(self, db: Connection, herd_data: HerdCreate):
         """Create a new herd."""
         # Additional business logic validation could go here
         # For example, check for duplicate names, validate location format, etc.
 
-        herd = self.repository.create(db, herd_data)
-        logger.info(f"Created new herd: {herd.name} at {herd.location}")
-        return herd
+        domain_herd = self.repository.create(db, herd_data)
+        
+        # Convert domain model to Pydantic model
+        from ..schemas import Herd as HerdSchema
+        pydantic_herd = HerdSchema(
+            id=domain_herd.id,
+            name=domain_herd.name,
+            location=domain_herd.location,
+            created_at=domain_herd.created_at,
+            updated_at=domain_herd.updated_at
+        )
+        
+        logger.info(f"Created new herd: {pydantic_herd.name} at {pydantic_herd.location}")
+        return pydantic_herd
 
-    def update_herd(self, db: Connection, herd_id: int, herd_data: HerdUpdate) -> Herd:
+    def update_herd(self, db: Connection, herd_id: int, herd_data: HerdUpdate):
         """Update an existing herd."""
         if herd_id <= 0:
             raise ValidationError("herd_id", "Herd ID must be positive")
@@ -100,9 +162,19 @@ class HerdService:
         # Additional business logic validation could go here
         # For example, check for conflicts with other herds, etc.
 
-        updated_herd = self.repository.update(db, herd_id, herd_data)
-        if not updated_herd:
+        updated_domain_herd = self.repository.update(db, herd_id, herd_data)
+        if not updated_domain_herd:
             raise HerdNotFoundError(herd_id)
+
+        # Convert domain model to Pydantic model
+        from ..schemas import Herd as HerdSchema
+        updated_herd = HerdSchema(
+            id=updated_domain_herd.id,
+            name=updated_domain_herd.name,
+            location=updated_domain_herd.location,
+            created_at=updated_domain_herd.created_at,
+            updated_at=updated_domain_herd.updated_at
+        )
 
         logger.info(f"Updated herd {herd_id}: {updated_herd.name}")
         return updated_herd
