@@ -43,6 +43,23 @@ python -m agent http://localhost:8000 --token fake-super-secret-token
 The agent reads `model_context.yaml` to discover the API path and returns the
 JSON response from the server. For full YAML support install the optional
 `PyYAML` dependency; otherwise a limited built-in parser is used.
+The agent now uses the `requests` library for HTTP communications, enhancing its robustness and error handling.
+
+### API Endpoints
+
+The server exposes the following API endpoints under the `/api/v1` prefix:
+
+#### `GET /herd`
+- **Description**: Retrieves a list of all herd entries.
+- **Authentication**: Requires Bearer Token authentication (e.g., `fake-super-secret-token`).
+- **Response**: A JSON array of herd objects, each containing `id`, `name`, and `location`.
+
+#### `POST /herd`
+- **Description**: Creates a new herd entry.
+- **Authentication**: Requires Bearer Token authentication (e.g., `fake-super-secret-token`).
+- **Request Body**: Expects a JSON object with `name` (string) and `location` (string).
+  Example: `{"name": "Blue Valley Ranch", "location": "Montana"}`
+- **Response**: The newly created herd object as JSON, including its assigned `id`. Status code 201 on success.
 
 ## Running tests
 

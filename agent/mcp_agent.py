@@ -78,7 +78,7 @@ class MCPAgent:
         }
 
         try:
-            response = requests.get(url, headers=headers)
+            response = requests.get(url, headers=headers, timeout=10) # Added timeout
             response.raise_for_status()  # Raises HTTPError for 4XX/5XX responses
             return response.json()
         except requests.exceptions.HTTPError as exc:
