@@ -7,21 +7,23 @@ from typing import Any, Dict, List, Optional, Type, TypeVar
 
 logger = logging.getLogger(__name__)
 
-T = TypeVar('T')
+T = TypeVar("T")
 
 
 class BaseRepository(ABC):
     """Abstract base repository class."""
-    
+
     def __init__(self, table_name: str):
         self.table_name = table_name
-    
+
     @abstractmethod
     def _row_to_model(self, row: Dict[str, Any]) -> T:
         """Convert database row to domain model."""
         pass
-    
-    def _execute_query(self, db: Connection, query: str, params: tuple = ()) -> List[Dict[str, Any]]:
+
+    def _execute_query(
+        self, db: Connection, query: str, params: tuple = ()
+    ) -> List[Dict[str, Any]]:
         """Execute a query and return results as list of dicts."""
         try:
             cursor = db.execute(query, params)
@@ -30,17 +32,21 @@ class BaseRepository(ABC):
         except Exception as e:
             logger.error(f"Query execution failed: {query} with params {params} - {e}")
             raise
-    
-    def _execute_single(self, db: Connection, query: str, params: tuple = ()) -> Optional[Dict[str, Any]]:
+
+    def _execute_single(
+        self, db: Connection, query: str, params: tuple = ()
+    ) -> Optional[Dict[str, Any]]:
         """Execute a query and return single result or None."""
         try:
             cursor = db.execute(query, params)
             row = cursor.fetchone()
             return dict(row) if row else None
         except Exception as e:
-            logger.error(f"Single query execution failed: {query} with params {params} - {e}")
+            logger.error(
+                f"Single query execution failed: {query} with params {params} - {e}"
+            )
             raise
-    
+
     def _execute_insert(self, db: Connection, query: str, params: tuple = ()) -> int:
         """Execute an insert query and return the new row ID."""
         try:
@@ -52,7 +58,7 @@ class BaseRepository(ABC):
         except Exception as e:
             logger.error(f"Insert execution failed: {query} with params {params} - {e}")
             raise
-    
+
     def _execute_update(self, db: Connection, query: str, params: tuple = ()) -> int:
         """Execute an update/delete query and return affected row count."""
         try:

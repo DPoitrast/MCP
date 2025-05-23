@@ -8,7 +8,7 @@ from .exceptions import (
 
 __all__ = [
     "MCPException",
-    "HerdNotFoundError", 
+    "HerdNotFoundError",
     "ValidationError",
     "DatabaseError",
     "AuthenticationError",

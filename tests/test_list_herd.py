@@ -39,7 +39,7 @@ def test_list_herd():
     assert isinstance(data["items"], list)
     assert len(data["items"]) >= 2
     assert data["total"] >= 2
-    
+
     # Check that the herds are in the items
     herd_names = [herd["name"] for herd in data["items"]]
     assert "Alpha Farm" in herd_names
