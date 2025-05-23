@@ -3,6 +3,9 @@ try:
 except Exception:  # pragma: no cover - optional dependency
     yaml = None
 
+# Import requests at module load so tests can patch MCPAgent.requests
+import requests  # type: ignore
+
 
 class MCPAgent:
     """Simple agent for interacting with the MCP API."""
@@ -37,6 +40,13 @@ class MCPAgent:
                 tool = None
                 for raw_line in f:
                     line = raw_line.strip()
+                    if line.startswith("schema_version:"):
+                        # Top level schema version
+                        value = line.split(":", 1)[1].strip()
+                        try:
+                            context["schema_version"] = int(value)
+                        except ValueError:
+                            context["schema_version"] = value
                     if line.startswith("version:"):
                         context.setdefault("api", {})["version"] = line.split(":", 1)[1].strip()
                     elif line.startswith("- name:"):
@@ -47,6 +57,13 @@ class MCPAgent:
                         tool["method"] = line.split(":", 1)[1].strip()
                     elif line.startswith("path:") and tool is not None:
                         tool["path"] = line.split(":", 1)[1].strip()
+                    elif line.startswith("description:") and tool is not None:
+                        tool["description"] = line.split(":", 1)[1].strip()
+                    elif line.startswith("scopes:") and tool is not None:
+                        scopes_part = line.split(":", 1)[1].strip()
+                        scopes_part = scopes_part.strip("[]")
+                        scopes = [s.strip() for s in scopes_part.split(',') if s.strip()]
+                        tool["scopes"] = scopes if scopes_part else []
         except FileNotFoundError:
             # If the file is not found, return the default context,
             # which is an empty list of tools. This matches the behavior
@@ -70,8 +87,6 @@ class MCPAgent:
         if not path:
             raise ValueError("listHerd tool path not found in model context")
         
-        import requests # Import requests library
-
         url = self.base_url + path
         headers = {
             'Authorization': f'Bearer {token}',
