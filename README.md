@@ -51,7 +51,7 @@ management capabilities that can be deployed to AWS Fargate.
 
 4. **Get an access token:**
    ```bash
-   curl -X POST "http://localhost:8000/api/v1/auth/token" \
+   curl -X POST "http://localhost:8000/api/v1/token" \
         -H "Content-Type: application/x-www-form-urlencoded" \
         -d "username=johndoe&password=secret"
    ```
@@ -69,7 +69,7 @@ If not set, it defaults to `mcp.db` in the working directory.
 ### OAuth2 Flow
 ```bash
 # Get access token
-curl -X POST "http://localhost:8000/api/v1/auth/token" \
+curl -X POST "http://localhost:8000/api/v1/token" \
      -d "username=johndoe&password=secret"
 
 # Use token in requests
@@ -130,9 +130,9 @@ This demonstrates:
 - `GET /api/v1/mcp/models` - List available models
 
 ### Authentication Endpoints
-- `POST /api/v1/auth/token` - OAuth2 token login
-- `GET /api/v1/auth/users/me` - Current user info
-- `GET /api/v1/auth/users/me/profile` - Detailed profile
+- `POST /api/v1/token` - OAuth2 token login
+- `GET /api/v1/users/me` - Current user info
+- `GET /api/v1/users/me/profile` - Detailed profile
 
 ## Testing
 
