@@ -5,3 +5,7 @@ pydantic
 PyYAML
 pytest
 requests
+python-jose[cryptography]
+passlib[bcrypt]
+python-multipart
+pydantic-settings

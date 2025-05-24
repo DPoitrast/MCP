@@ -70,8 +70,22 @@ def main():
     # Default behavior: list herds using the original method for backward compatibility
     try:
         if hasattr(agent, 'capabilities') and agent.capabilities:
-            # Use dynamic discovery
-            result = agent.execute_operation("list_herd", args.token)
+            # Use dynamic discovery - find the list herds operation
+            tools = agent.get_available_tools()
+            list_herd_tool = None
+            
+            # Look for the list herds operation by path and method
+            for tool in tools:
+                if (tool.get('path') == '/api/v1/herd' and 
+                    tool.get('method') == 'GET'):
+                    list_herd_tool = tool['name']
+                    break
+            
+            if list_herd_tool:
+                result = agent.execute_operation(list_herd_tool, args.token)
+            else:
+                # Fallback to static method if we can't find the operation
+                result = agent.list_herd(args.token)
         else:
             # Fallback to static method
             result = agent.list_herd(args.token)

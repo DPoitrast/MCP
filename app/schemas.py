@@ -77,3 +77,39 @@ class HerdList(BaseModel):
     total: int = Field(..., description="Total number of herds")
     skip: int = Field(..., description="Number of items skipped")
     limit: int = Field(..., description="Number of items requested")
+
+
+# Authentication schemas
+class Token(BaseModel):
+    """OAuth2 token response schema."""
+    access_token: str = Field(..., description="JWT access token")
+    token_type: str = Field(default="bearer", description="Token type")
+
+
+class TokenData(BaseModel):
+    """Token payload data schema."""
+    username: Optional[str] = Field(None, description="Username from token")
+
+
+class User(BaseModel):
+    """User schema."""
+    username: str = Field(..., description="Username")
+    disabled: Optional[bool] = Field(False, description="Whether user is disabled")
+
+
+class UserInDB(User):
+    """User schema for database storage."""
+    hashed_password: str = Field(..., description="Hashed password")
+
+
+# MCP Operation schemas
+class MCPExecuteRequest(BaseModel):
+    """Schema for MCP execute operation requests."""
+    operation: str = Field(..., description="Operation to execute")
+    parameters: Optional[dict] = Field(None, description="Operation parameters")
+
+
+class MCPBroadcastRequest(BaseModel):
+    """Schema for MCP broadcast operation requests."""
+    message: str = Field(..., description="Message to broadcast")
+    targets: Optional[list[str]] = Field(None, description="Target recipients")
