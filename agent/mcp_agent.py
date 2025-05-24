@@ -15,10 +15,12 @@ class MCPAgent:
         base_url: str, 
         context_path: str = "model_context.yaml",
         auto_discover: bool = True,
-        api_prefix: str = "/api/v1"
+        api_prefix: str = "/api/v1",
+        timeout: float = 30.0
     ):
         self.base_url = base_url.rstrip("/")
         self.api_prefix = api_prefix
+        self.timeout = timeout
         self.capabilities = {}
         
         # Try dynamic discovery first, fall back to static context
@@ -98,7 +100,7 @@ class MCPAgent:
         openapi_url = f"{self.base_url}{self.api_prefix}/openapi.json"
         
         try:
-            response = requests.get(openapi_url, timeout=10)
+            response = requests.get(openapi_url, timeout=self.timeout)
             response.raise_for_status()
             openapi_spec = response.json()
             
@@ -235,10 +237,15 @@ class MCPAgent:
             if query_params:
                 request_kwargs["params"] = query_params
         
+        # Add timeout to request
+        request_kwargs["timeout"] = self.timeout
+        
         try:
             response = requests.request(method, url, **request_kwargs)
             response.raise_for_status()
             return response.json()
+        except requests.exceptions.Timeout as exc:
+            raise RuntimeError(f"Request timeout after {self.timeout}s: {exc}")
         except requests.exceptions.HTTPError as exc:
             raise RuntimeError(f"HTTP error {exc.response.status_code}: {exc.response.reason}")
         except requests.exceptions.RequestException as exc:
@@ -266,9 +273,11 @@ class MCPAgent:
         }
 
         try:
-            response = requests.get(url, headers=headers)
+            response = requests.get(url, headers=headers, timeout=self.timeout)
             response.raise_for_status()  # Raises HTTPError for 4XX/5XX responses
             return response.json()
+        except requests.exceptions.Timeout as exc:
+            raise RuntimeError(f"Request timeout after {self.timeout}s: {exc}")
         except requests.exceptions.HTTPError as exc:
             raise RuntimeError(
                 f"HTTP error {exc.response.status_code}: {exc.response.reason}"

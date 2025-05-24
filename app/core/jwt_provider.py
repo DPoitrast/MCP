@@ -68,10 +68,18 @@ class StubJWTProvider(JWTProvider):
 
 def create_jwt_provider() -> JWTProvider:
     """Factory function to create appropriate JWT provider."""
+    from .config import settings
+    
     try:
         return JoseJWTProvider()
     except ImportError:
-        logger.warning("python-jose not available, using stub JWT provider")
+        if settings.environment == "production":
+            logger.error("python-jose is required in production environment")
+            raise ImportError(
+                "python-jose is required for JWT functionality in production. "
+                "Install with: pip install python-jose[cryptography]"
+            )
+        logger.warning("python-jose not available, using stub JWT provider for development")
         return StubJWTProvider()
 
 
