@@ -7,6 +7,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 
 from ....core.security import CurrentActiveUser
 from ....schemas import MCPExecuteRequest, MCPBroadcastRequest
+from ....models.user import AuthenticatedUserModel
 
 logger = logging.getLogger(__name__)
 
@@ -16,7 +17,7 @@ router = APIRouter()
 @router.post("/execute", tags=["mcp"])
 async def execute_operation(
     request: MCPExecuteRequest,
-    current_user: dict = CurrentActiveUser
+    current_user: AuthenticatedUserModel = CurrentActiveUser
 ):
     """
     Execute an MCP operation.
@@ -30,7 +31,7 @@ async def execute_operation(
     Returns:
         dict: Operation execution result
     """
-    logger.info(f"User '{current_user['username']}' executing operation: {request.operation}")
+    logger.info(f"User '{current_user.username}' executing operation: {request.operation}")
     
     # Mock implementation - in a real system, this would dispatch to actual MCP operations
     try:
@@ -63,16 +64,16 @@ async def execute_operation(
                 detail=f"Unknown operation: {request.operation}"
             )
         
-        logger.info(f"Operation '{request.operation}' completed successfully for user '{current_user['username']}'")
+        logger.info(f"Operation '{request.operation}' completed successfully for user '{current_user.username}'")
         return {
             "success": True,
             "operation": request.operation,
             "result": result,
-            "executed_by": current_user["username"]
+            "executed_by": current_user.username
         }
         
     except Exception as e:
-        logger.error(f"Operation '{request.operation}' failed for user '{current_user['username']}': {e}")
+        logger.error(f"Operation '{request.operation}' failed for user '{current_user.username}': {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Operation execution failed: {str(e)}"
@@ -82,7 +83,7 @@ async def execute_operation(
 @router.post("/broadcast", tags=["mcp"])
 async def broadcast_message(
     request: MCPBroadcastRequest,
-    current_user: dict = CurrentActiveUser
+    current_user: AuthenticatedUserModel = CurrentActiveUser
 ):
     """
     Broadcast a message to connected clients.
@@ -96,7 +97,7 @@ async def broadcast_message(
     Returns:
         dict: Broadcast result
     """
-    logger.info(f"User '{current_user['username']}' broadcasting message: {request.message[:50]}...")
+    logger.info(f"User '{current_user.username}' broadcasting message: {request.message[:50]}...")
     
     try:
         # Mock implementation - in a real system, this would send to actual connected clients
@@ -110,17 +111,17 @@ async def broadcast_message(
             "delivered_count": delivered_count,
             "failed_count": 0,
             "timestamp": "2024-01-01T00:00:00Z",
-            "broadcast_by": current_user["username"]
+            "broadcast_by": current_user.username
         }
         
-        logger.info(f"Message broadcast completed by user '{current_user['username']}': delivered to {delivered_count} recipients")
+        logger.info(f"Message broadcast completed by user '{current_user.username}': delivered to {delivered_count} recipients")
         return {
             "success": True,
             "broadcast_result": result
         }
         
     except Exception as e:
-        logger.error(f"Broadcast failed for user '{current_user['username']}': {e}")
+        logger.error(f"Broadcast failed for user '{current_user.username}': {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Broadcast failed: {str(e)}"
@@ -128,7 +129,7 @@ async def broadcast_message(
 
 
 @router.get("/models", tags=["mcp"])
-async def list_models(current_user: dict = CurrentActiveUser):
+async def list_models(current_user: AuthenticatedUserModel = CurrentActiveUser):
     """
     List available MCP models.
     
@@ -140,7 +141,7 @@ async def list_models(current_user: dict = CurrentActiveUser):
     Returns:
         dict: Available models
     """
-    logger.info(f"User '{current_user['username']}' requesting model list")
+    logger.info(f"User '{current_user.username}' requesting model list")
     
     # Mock model list - in a real system, this would query actual available models
     models = [
@@ -174,5 +175,5 @@ async def list_models(current_user: dict = CurrentActiveUser):
         "models": models,
         "total_count": len(models),
         "active_count": len([m for m in models if m["status"] == "active"]),
-        "requested_by": current_user["username"]
+        "requested_by": current_user.username
     }

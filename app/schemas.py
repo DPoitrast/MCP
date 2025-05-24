@@ -58,8 +58,7 @@ class HerdUpdate(BaseModel):
 class Herd(HerdBase):
     """Schema for herd responses."""
 
-    class Config:
-        orm_mode = True
+    model_config = {"from_attributes": True}
 
     id: int = Field(..., description="Unique identifier for the herd")
     created_at: Optional[datetime] = Field(

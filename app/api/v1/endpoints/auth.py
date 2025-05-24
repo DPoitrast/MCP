@@ -9,6 +9,7 @@ from fastapi.security import OAuth2PasswordRequestForm
 from ....core.config import settings
 from ....core.security import authenticate_user, create_access_token, CurrentUser
 from ....schemas import Token, User
+from ....models.user import AuthenticatedUserModel
 
 logger = logging.getLogger(__name__)
 
@@ -40,15 +41,15 @@ async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(
     
     access_token_expires = timedelta(minutes=settings.access_token_expire_minutes)
     access_token = create_access_token(
-        data={"sub": user["username"]}, expires_delta=access_token_expires
+        data={"sub": user.username}, expires_delta=access_token_expires
     )
     
-    logger.info(f"User '{user['username']}' logged in successfully")
+    logger.info(f"User '{user.username}' logged in successfully")
     return {"access_token": access_token, "token_type": "bearer"}
 
 
 @router.get("/users/me", response_model=User, tags=["authentication"])
-async def read_users_me(current_user: dict = CurrentUser):
+async def read_users_me(current_user: AuthenticatedUserModel = CurrentUser):
     """
     Get current user information.
     
@@ -58,11 +59,11 @@ async def read_users_me(current_user: dict = CurrentUser):
     Returns:
         User: Current user information
     """
-    return User(username=current_user["username"], disabled=current_user.get("disabled", False))
+    return User(username=current_user.username, disabled=current_user.disabled)
 
 
 @router.get("/users/me/profile", tags=["authentication"])
-async def read_user_profile(current_user: dict = CurrentUser):
+async def read_user_profile(current_user: AuthenticatedUserModel = CurrentUser):
     """
     Get detailed current user profile.
     
@@ -73,11 +74,11 @@ async def read_user_profile(current_user: dict = CurrentUser):
         dict: Detailed user profile information
     """
     return {
-        "username": current_user["username"],
-        "disabled": current_user.get("disabled", False),
+        "username": current_user.username,
+        "disabled": current_user.disabled,
         "profile": {
-            "user_type": current_user.get("type", "standard"),
+            "user_type": current_user.user_type,
             "last_login": "Not tracked in development",
-            "permissions": ["read", "write", "execute"] if not current_user.get("disabled") else ["read"]
+            "permissions": ["read", "write", "execute"] if not current_user.disabled else ["read"]
         }
     }

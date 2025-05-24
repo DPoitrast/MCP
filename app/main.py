@@ -1,6 +1,7 @@
 """FastAPI application with clean architecture."""
 
 import logging
+from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
@@ -16,6 +17,18 @@ logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
 )
 logger = logging.getLogger(__name__)
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Application lifespan context manager."""
+    # Startup
+    logger.info(f"Starting {settings.title} v{settings.version}")
+    logger.info(f"Environment: {settings.environment}")
+    logger.info(f"Debug mode: {settings.debug}")
+    yield
+    # Shutdown
+    logger.info("Shutting down application")
 
 
 def create_application() -> FastAPI:
@@ -38,6 +51,7 @@ def create_application() -> FastAPI:
         openapi_url=(
             f"{settings.api_v1_prefix}/openapi.json" if settings.debug else None
         ),
+        lifespan=lifespan,
     )
 
     # Add CORS middleware
@@ -79,17 +93,7 @@ def create_application() -> FastAPI:
             },
         )
 
-    @app.on_event("startup")
-    async def startup_event():
-        """Application startup event."""
-        logger.info(f"Starting {settings.title} v{settings.version}")
-        logger.info(f"Environment: {settings.environment}")
-        logger.info(f"Debug mode: {settings.debug}")
-
-    @app.on_event("shutdown")
-    async def shutdown_event():
-        """Application shutdown event."""
-        logger.info("Shutting down application")
+    # Lifespan events handled by lifespan context manager
 
     return app
 

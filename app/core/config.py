@@ -12,9 +12,12 @@ class Settings(BaseSettings):
     database_path: str = Field(default="mcp.db", env="DATABASE_PATH")
 
     # Security
-    secret_key: str = Field(default="fake-super-secret-token", env="SECRET_KEY")
+    secret_key: str = Field(default="", env="SECRET_KEY")
     algorithm: str = "HS256"
     access_token_expire_minutes: int = 30
+    
+    # CORS Configuration
+    allowed_origins: list[str] = Field(default_factory=lambda: ["http://localhost:3000", "http://localhost:8080"], env="ALLOWED_ORIGINS")
 
     # API Configuration
     api_v1_prefix: str = "/api/v1"
@@ -34,6 +37,15 @@ class Settings(BaseSettings):
     environment: str = Field(default="development", env="ENVIRONMENT")
     debug: bool = Field(default=True, env="DEBUG")
 
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        # Set default secret key for development if not provided
+        if not self.secret_key:
+            if self.environment == "development":
+                self.secret_key = "dev-secret-key-change-in-production"
+            else:
+                raise ValueError("SECRET_KEY must be set in production environment")
+    
     class Config:
         env_file = ".env"
         env_file_encoding = "utf-8"

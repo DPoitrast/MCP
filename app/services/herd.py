@@ -6,9 +6,10 @@ from typing import List, Optional
 
 from ..core.config import settings
 from ..exceptions import HerdNotFoundError, ValidationError
-from ..models import Herd
+from .. import models
 from ..repositories import HerdRepository
-from ..schemas import HerdCreate, HerdUpdate, HerdList
+from ..schemas import HerdCreate, HerdUpdate, HerdList, Herd as HerdSchema
+from ..utils.model_converters import convert_domain_to_schema, convert_domain_list_to_schema
 
 logger = logging.getLogger(__name__)
 
@@ -44,17 +45,7 @@ class HerdService:
         total = self.repository.count(db)
 
         # Convert domain models to Pydantic models
-        from ..schemas import Herd as HerdSchema
-        pydantic_herds = [
-            HerdSchema(
-                id=herd.id,
-                name=herd.name,
-                location=herd.location,
-                created_at=herd.created_at,
-                updated_at=herd.updated_at
-            )
-            for herd in domain_herds
-        ]
+        pydantic_herds = convert_domain_list_to_schema(domain_herds, HerdSchema)
 
         logger.info(
             f"Retrieved {len(pydantic_herds)} herds (skip={skip}, limit={limit}, total={total})"
@@ -72,14 +63,7 @@ class HerdService:
             raise HerdNotFoundError(herd_id)
 
         # Convert domain model to Pydantic model
-        from ..schemas import Herd as HerdSchema
-        pydantic_herd = HerdSchema(
-            id=domain_herd.id,
-            name=domain_herd.name,
-            location=domain_herd.location,
-            created_at=domain_herd.created_at,
-            updated_at=domain_herd.updated_at
-        )
+        pydantic_herd = convert_domain_to_schema(domain_herd, HerdSchema)
 
         logger.debug(f"Retrieved herd {herd_id}: {pydantic_herd.name}")
         return pydantic_herd
@@ -92,17 +76,7 @@ class HerdService:
         domain_herds = self.repository.get_by_name(db, name.strip())
         
         # Convert domain models to Pydantic models
-        from ..schemas import Herd as HerdSchema
-        pydantic_herds = [
-            HerdSchema(
-                id=herd.id,
-                name=herd.name,
-                location=herd.location,
-                created_at=herd.created_at,
-                updated_at=herd.updated_at
-            )
-            for herd in domain_herds
-        ]
+        pydantic_herds = convert_domain_list_to_schema(domain_herds, HerdSchema)
         
         logger.debug(f"Found {len(pydantic_herds)} herds matching name '{name}'")
         return pydantic_herds
@@ -115,17 +89,7 @@ class HerdService:
         domain_herds = self.repository.get_by_location(db, location.strip())
         
         # Convert domain models to Pydantic models
-        from ..schemas import Herd as HerdSchema
-        pydantic_herds = [
-            HerdSchema(
-                id=herd.id,
-                name=herd.name,
-                location=herd.location,
-                created_at=herd.created_at,
-                updated_at=herd.updated_at
-            )
-            for herd in domain_herds
-        ]
+        pydantic_herds = convert_domain_list_to_schema(domain_herds, HerdSchema)
         
         logger.debug(f"Found {len(pydantic_herds)} herds matching location '{location}'")
         return pydantic_herds
@@ -138,14 +102,7 @@ class HerdService:
         domain_herd = self.repository.create(db, herd_data)
         
         # Convert domain model to Pydantic model
-        from ..schemas import Herd as HerdSchema
-        pydantic_herd = HerdSchema(
-            id=domain_herd.id,
-            name=domain_herd.name,
-            location=domain_herd.location,
-            created_at=domain_herd.created_at,
-            updated_at=domain_herd.updated_at
-        )
+        pydantic_herd = convert_domain_to_schema(domain_herd, HerdSchema)
         
         logger.info(f"Created new herd: {pydantic_herd.name} at {pydantic_herd.location}")
         return pydantic_herd
@@ -167,14 +124,7 @@ class HerdService:
             raise HerdNotFoundError(herd_id)
 
         # Convert domain model to Pydantic model
-        from ..schemas import Herd as HerdSchema
-        updated_herd = HerdSchema(
-            id=updated_domain_herd.id,
-            name=updated_domain_herd.name,
-            location=updated_domain_herd.location,
-            created_at=updated_domain_herd.created_at,
-            updated_at=updated_domain_herd.updated_at
-        )
+        updated_herd = convert_domain_to_schema(updated_domain_herd, HerdSchema)
 
         logger.info(f"Updated herd {herd_id}: {updated_herd.name}")
         return updated_herd

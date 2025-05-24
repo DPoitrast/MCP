@@ -5,7 +5,7 @@ from sqlite3 import Connection
 from typing import Dict, List, Optional, Any
 
 from .base import BaseRepository
-from ..models import Herd
+from .. import models
 from ..schemas import HerdCreate, HerdUpdate
 from ..exceptions import HerdNotFoundError
 
@@ -18,9 +18,9 @@ class HerdRepository(BaseRepository):
     def __init__(self):
         super().__init__("herd")
 
-    def _row_to_model(self, row: Dict[str, Any]) -> Herd:
+    def _row_to_model(self, row: Dict[str, Any]) -> models.Herd:
         """Convert database row to Herd model."""
-        return Herd(
+        return models.Herd(
             id=row["id"],
             name=row["name"],
             location=row["location"],
@@ -28,7 +28,7 @@ class HerdRepository(BaseRepository):
             updated_at=row.get("updated_at"),
         )
 
-    def get_all(self, db: Connection, skip: int = 0, limit: int = 100) -> List[Herd]:
+    def get_all(self, db: Connection, skip: int = 0, limit: int = 100) -> List[models.Herd]:
         """Retrieve herds with pagination."""
         query = """
             SELECT id, name, location, created_at, updated_at 
@@ -41,7 +41,7 @@ class HerdRepository(BaseRepository):
         logger.debug(f"Retrieved {len(herds)} herds (skip={skip}, limit={limit})")
         return herds
 
-    def get_by_id(self, db: Connection, herd_id: int) -> Optional[Herd]:
+    def get_by_id(self, db: Connection, herd_id: int) -> Optional[models.Herd]:
         """Retrieve a specific herd by ID."""
         query = """
             SELECT id, name, location, created_at, updated_at 
@@ -51,7 +51,7 @@ class HerdRepository(BaseRepository):
         row = self._execute_single(db, query, (herd_id,))
         return self._row_to_model(row) if row else None
 
-    def get_by_name(self, db: Connection, name: str) -> List[Herd]:
+    def get_by_name(self, db: Connection, name: str) -> List[models.Herd]:
         """Retrieve herds by name (partial match)."""
         query = """
             SELECT id, name, location, created_at, updated_at 
@@ -62,7 +62,7 @@ class HerdRepository(BaseRepository):
         rows = self._execute_query(db, query, (f"%{name}%",))
         return [self._row_to_model(row) for row in rows]
 
-    def get_by_location(self, db: Connection, location: str) -> List[Herd]:
+    def get_by_location(self, db: Connection, location: str) -> List[models.Herd]:
         """Retrieve herds by location (partial match)."""
         query = """
             SELECT id, name, location, created_at, updated_at 
@@ -73,7 +73,7 @@ class HerdRepository(BaseRepository):
         rows = self._execute_query(db, query, (f"%{location}%",))
         return [self._row_to_model(row) for row in rows]
 
-    def create(self, db: Connection, herd_data: HerdCreate) -> Herd:
+    def create(self, db: Connection, herd_data: HerdCreate) -> models.Herd:
         """Create a new herd."""
         query = """
             INSERT INTO herd (name, location) 
@@ -93,7 +93,7 @@ class HerdRepository(BaseRepository):
 
     def update(
         self, db: Connection, herd_id: int, herd_data: HerdUpdate
-    ) -> Optional[Herd]:
+    ) -> Optional[models.Herd]:
         """Update an existing herd."""
         # Build dynamic update query
         update_fields = []
