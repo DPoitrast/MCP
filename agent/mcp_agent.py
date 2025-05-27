@@ -5,6 +5,9 @@ except Exception:  # pragma: no cover - optional dependency
 
 # Import requests at module load so tests can patch MCPAgent.requests
 import requests  # type: ignore
+import openai
+import os
+from typing import List, Dict, Any, Optional
 
 
 class MCPAgent:
@@ -16,12 +19,24 @@ class MCPAgent:
         context_path: str = "model_context.yaml",
         auto_discover: bool = True,
         api_prefix: str = "/api/v1",
-        timeout: float = 30.0
+        timeout: float = 30.0,
+        openai_api_key: Optional[str] = None
     ):
         self.base_url = base_url.rstrip("/")
         self.api_prefix = api_prefix
         self.timeout = timeout
         self.capabilities = {}
+        
+        # Initialize OpenAI client
+        self.openai_client = None
+        if openai_api_key or os.getenv("OPENAI_API_KEY"):
+            try:
+                self.openai_client = openai.OpenAI(
+                    api_key=openai_api_key or os.getenv("OPENAI_API_KEY")
+                )
+                print("✓ OpenAI client initialized successfully")
+            except Exception as e:
+                print(f"⚠ Failed to initialize OpenAI client: {e}")
         
         # Try dynamic discovery first, fall back to static context
         if auto_discover:
@@ -285,3 +300,172 @@ class MCPAgent:
         except requests.exceptions.RequestException as exc:
             # This catches other exceptions like ConnectionError, Timeout, etc.
             raise RuntimeError(f"Request error: {exc}")
+
+    def chat_with_openai(
+        self, 
+        user_message: str, 
+        conversation_history: List[Dict[str, str]] = None,
+        system_prompt: str = None,
+        model: str = "gpt-3.5-turbo"
+    ) -> Dict[str, Any]:
+        """
+        Send a message to OpenAI and get a response.
+        
+        Args:
+            user_message: The user's message
+            conversation_history: Previous conversation messages
+            system_prompt: System prompt to guide the AI behavior
+            model: OpenAI model to use
+            
+        Returns:
+            Dict containing the response and updated conversation history
+        """
+        if not self.openai_client:
+            raise RuntimeError("OpenAI client not initialized. Please provide an API key.")
+        
+        if conversation_history is None:
+            conversation_history = []
+        
+        # Prepare messages
+        messages = []
+        
+        # Add system prompt if provided
+        if system_prompt:
+            messages.append({"role": "system", "content": system_prompt})
+        
+        # Add conversation history
+        messages.extend(conversation_history)
+        
+        # Add current user message
+        messages.append({"role": "user", "content": user_message})
+        
+        try:
+            response = self.openai_client.chat.completions.create(
+                model=model,
+                messages=messages,
+                temperature=0.7,
+                max_tokens=1500
+            )
+            
+            assistant_response = response.choices[0].message.content
+            
+            # Update conversation history
+            updated_history = conversation_history.copy()
+            updated_history.append({"role": "user", "content": user_message})
+            updated_history.append({"role": "assistant", "content": assistant_response})
+            
+            return {
+                "response": assistant_response,
+                "conversation_history": updated_history,
+                "usage": response.usage.model_dump() if response.usage else None
+            }
+            
+        except Exception as e:
+            raise RuntimeError(f"OpenAI API error: {e}")
+
+    def intelligent_mcp_query(
+        self, 
+        user_request: str, 
+        token: str,
+        conversation_history: List[Dict[str, str]] = None
+    ) -> Dict[str, Any]:
+        """
+        Use OpenAI to understand user intent and execute MCP operations accordingly.
+        
+        Args:
+            user_request: Natural language request from user
+            token: Authentication token for MCP API
+            conversation_history: Previous conversation context
+            
+        Returns:
+            Dict containing the response and any MCP operation results
+        """
+        if not self.openai_client:
+            raise RuntimeError("OpenAI client not initialized. Please provide an API key.")
+        
+        # Get available tools for context
+        available_tools = self.get_available_tools()
+        tools_description = "\n".join([
+            f"- {tool.get('name', 'Unknown')}: {tool.get('description', 'No description')}"
+            for tool in available_tools
+        ])
+        
+        system_prompt = f"""You are an intelligent MCP (Model Context Protocol) agent assistant. 
+You have access to the following MCP API tools:
+
+{tools_description}
+
+Your job is to:
+1. Understand the user's natural language request
+2. Determine which MCP API tool(s) to use
+3. Extract any necessary parameters
+4. Provide a helpful response
+
+If the user asks for something that requires an MCP API call, respond with a JSON object containing:
+- "action": "mcp_call"
+- "tool_name": the name of the tool to use
+- "parameters": object with the required parameters
+- "explanation": brief explanation of what you're doing
+
+If the user asks a general question or needs clarification, respond normally as a helpful assistant.
+
+Current conversation context: The user is interacting with an MCP system that manages herds and other resources."""
+
+        # Get OpenAI's interpretation of the request
+        chat_response = self.chat_with_openai(
+            user_message=user_request,
+            conversation_history=conversation_history,
+            system_prompt=system_prompt,
+            model="gpt-3.5-turbo"
+        )
+        
+        assistant_response = chat_response["response"]
+        
+        # Try to parse if this is an MCP action request
+        try:
+            import json
+            # Look for JSON in the response
+            if "action" in assistant_response and "mcp_call" in assistant_response:
+                # Extract JSON from response
+                start = assistant_response.find("{")
+                end = assistant_response.rfind("}") + 1
+                if start != -1 and end != 0:
+                    action_data = json.loads(assistant_response[start:end])
+                    
+                    if action_data.get("action") == "mcp_call":
+                        tool_name = action_data.get("tool_name")
+                        parameters = action_data.get("parameters", {})
+                        explanation = action_data.get("explanation", "")
+                        
+                        # Execute the MCP operation
+                        try:
+                            mcp_result = self.execute_operation(tool_name, token, **parameters)
+                            
+                            # Format the response
+                            formatted_response = f"{explanation}\n\nResults:\n{json.dumps(mcp_result, indent=2)}"
+                            
+                            return {
+                                "response": formatted_response,
+                                "mcp_result": mcp_result,
+                                "conversation_history": chat_response["conversation_history"],
+                                "action_taken": {
+                                    "tool": tool_name,
+                                    "parameters": parameters
+                                }
+                            }
+                        except Exception as e:
+                            error_response = f"{explanation}\n\nError executing MCP operation: {str(e)}"
+                            return {
+                                "response": error_response,
+                                "error": str(e),
+                                "conversation_history": chat_response["conversation_history"]
+                            }
+        except:
+            # If parsing fails, treat as normal conversation
+            pass
+        
+        # Return normal chat response
+        return {
+            "response": assistant_response,
+            "conversation_history": chat_response["conversation_history"]
+        }

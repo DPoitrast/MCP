@@ -2,7 +2,7 @@
 
 from fastapi import APIRouter
 
-from .endpoints import health, herd, auth, mcp
+from .endpoints import health, herd, auth, mcp, agent
 
 api_router = APIRouter()
 
@@ -11,3 +11,4 @@ api_router.include_router(health.router, prefix="", tags=["health"])
 api_router.include_router(herd.router, prefix="", tags=["herd"])
 api_router.include_router(auth.router, prefix="", tags=["authentication"])
 api_router.include_router(mcp.router, prefix="", tags=["mcp"])
+api_router.include_router(agent.router, prefix="/agent", tags=["agent"])

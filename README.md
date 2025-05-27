@@ -19,6 +19,12 @@ management capabilities that can be deployed to AWS Fargate.
 - **Fallback Compatibility**: Graceful degradation to static YAML configuration
 - **10x More Operations**: Comprehensive endpoint coverage vs static configuration
 
+### 🤖 OpenAI Integration
+- **Intelligent Conversations**: Natural language interface powered by OpenAI GPT models
+- **Smart MCP Operations**: AI understands user intent and executes appropriate MCP operations
+- **Conversational Context**: Maintains conversation history for better interactions
+- **API Endpoints**: RESTful endpoints for chat and intelligent query capabilities
+
 ### 📊 Comprehensive API
 - **CRUD Operations**: Full herd management (Create, Read, Update, Delete)
 - **Search & Filtering**: Search herds by name with flexible parameters
@@ -39,21 +45,31 @@ management capabilities that can be deployed to AWS Fargate.
    pip install -r requirements.txt
    ```
 
-2. **Seed the database:**
+2. **Configure OpenAI (Optional):**
+   ```bash
+   export OPENAI_API_KEY="your-openai-api-key-here"
+   ```
+
+3. **Seed the database:**
    ```bash
    python -m app.seed
    ```
 
-3. **Start the server:**
+4. **Start the server:**
    ```bash
    uvicorn app.main:app --reload
    ```
 
-4. **Get an access token:**
+5. **Get an access token:**
    ```bash
    curl -X POST "http://localhost:8000/api/v1/token" \
         -H "Content-Type: application/x-www-form-urlencoded" \
         -d "username=johndoe&password=secret"
+   ```
+
+6. **Try the OpenAI-powered agent:**
+   ```bash
+   python demo_agent_usage.py
    ```
 
 The database path can be configured via the `DATABASE_PATH` environment variable.
@@ -110,6 +126,18 @@ This demonstrates:
 - Error handling and fallback mechanisms
 - Real-time herd management operations
 
+### OpenAI Agent Demo
+Experience the AI-powered agent:
+```bash
+python demo_agent_usage.py
+```
+
+This demonstrates:
+- OpenAI integration and chat capabilities
+- Intelligent MCP operation execution
+- Natural language query processing
+- API endpoint usage examples
+
 ## API Operations
 
 ### Core Herd Management
@@ -128,6 +156,13 @@ This demonstrates:
 - `POST /api/v1/mcp/execute` - Execute MCP operations
 - `POST /api/v1/mcp/broadcast` - Broadcast messages
 - `GET /api/v1/mcp/models` - List available models
+
+### OpenAI Agent Endpoints
+- `POST /api/v1/agent/chat` - Direct chat with OpenAI agent
+- `POST /api/v1/agent/query` - Intelligent MCP queries with natural language
+- `GET /api/v1/agent/capabilities` - Agent capabilities and configuration
+- `GET /api/v1/agent/tools` - Available MCP tools
+- `GET /api/v1/agent/status` - Agent operational status
 
 ### Authentication Endpoints
 - `POST /api/v1/token` - OAuth2 token login
