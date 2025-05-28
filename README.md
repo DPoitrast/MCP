@@ -25,6 +25,13 @@ management capabilities that can be deployed to AWS Fargate.
 - **Conversational Context**: Maintains conversation history for better interactions
 - **API Endpoints**: RESTful endpoints for chat and intelligent query capabilities
 
+### 💬 Interactive Interfaces
+- **Interactive CLI**: Full-featured command-line interface with streaming responses
+- **Web Interface**: Modern web-based chat interface for browser interaction
+- **Session Management**: Automatic conversation saving and restoration
+- **Real-time Streaming**: Live response streaming for immediate feedback
+- **Tab Completion**: Smart completion for commands and tool names
+
 ### 📊 Comprehensive API
 - **CRUD Operations**: Full herd management (Create, Read, Update, Delete)
 - **Search & Filtering**: Search herds by name with flexible parameters
@@ -67,8 +74,15 @@ management capabilities that can be deployed to AWS Fargate.
         -d "username=johndoe&password=secret"
    ```
 
-6. **Try the OpenAI-powered agent:**
+6. **Try the interactive agents:**
    ```bash
+   # Interactive CLI
+   python interactive_agent.py
+   
+   # Web interface (in separate terminal)
+   python web_interface.py
+   
+   # Demo all features
    python demo_agent_usage.py
    ```
 
@@ -126,12 +140,26 @@ This demonstrates:
 - Error handling and fallback mechanisms
 - Real-time herd management operations
 
-### OpenAI Agent Demo
-Experience the AI-powered agent:
+### Interactive Agent Demos
+Experience the AI-powered interactive agents:
+
+**CLI Interface:**
+```bash
+python interactive_agent.py
+```
+Features: Real-time chat, streaming responses, command system, tab completion
+
+**Web Interface:**
+```bash
+python web_interface.py
+# Visit http://localhost:8080
+```
+Features: Modern web UI, session management, real-time messaging
+
+**Feature Demo:**
 ```bash
 python demo_agent_usage.py
 ```
-
 This demonstrates:
 - OpenAI integration and chat capabilities
 - Intelligent MCP operation execution

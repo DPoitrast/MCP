@@ -306,7 +306,8 @@ class MCPAgent:
         user_message: str, 
         conversation_history: List[Dict[str, str]] = None,
         system_prompt: str = None,
-        model: str = "gpt-3.5-turbo"
+        model: str = "gpt-3.5-turbo",
+        stream: bool = False
     ) -> Dict[str, Any]:
         """
         Send a message to OpenAI and get a response.
@@ -344,21 +345,44 @@ class MCPAgent:
                 model=model,
                 messages=messages,
                 temperature=0.7,
-                max_tokens=1500
+                max_tokens=1500,
+                stream=stream
             )
             
-            assistant_response = response.choices[0].message.content
-            
-            # Update conversation history
-            updated_history = conversation_history.copy()
-            updated_history.append({"role": "user", "content": user_message})
-            updated_history.append({"role": "assistant", "content": assistant_response})
-            
-            return {
-                "response": assistant_response,
-                "conversation_history": updated_history,
-                "usage": response.usage.model_dump() if response.usage else None
-            }
+            if stream:
+                # Return generator for streaming
+                def stream_generator():
+                    full_response = ""
+                    for chunk in response:
+                        if chunk.choices[0].delta.content:
+                            content = chunk.choices[0].delta.content
+                            full_response += content
+                            yield content
+                    
+                    # Update conversation history after streaming
+                    updated_history = conversation_history.copy()
+                    updated_history.append({"role": "user", "content": user_message})
+                    updated_history.append({"role": "assistant", "content": full_response})
+                    
+                return {
+                    "stream": stream_generator(),
+                    "conversation_history": conversation_history,  # Will be updated after streaming
+                    "is_streaming": True
+                }
+            else:
+                assistant_response = response.choices[0].message.content
+                
+                # Update conversation history
+                updated_history = conversation_history.copy()
+                updated_history.append({"role": "user", "content": user_message})
+                updated_history.append({"role": "assistant", "content": assistant_response})
+                
+                return {
+                    "response": assistant_response,
+                    "conversation_history": updated_history,
+                    "usage": response.usage.model_dump() if response.usage else None,
+                    "is_streaming": False
+                }
             
         except Exception as e:
             raise RuntimeError(f"OpenAI API error: {e}")
