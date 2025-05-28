@@ -43,7 +43,8 @@ def demo_openai_chat(agent):
         # Simple chat
         response = agent.chat_with_openai(
             user_message="Hello! Can you help me understand what MCP is?",
-            system_prompt="You are a helpful assistant that explains technical concepts clearly."
+            system_prompt="You are a helpful assistant that explains technical concepts clearly.",
+            model="gpt-4o-mini"
         )
         
         print("User: Hello! Can you help me understand what MCP is?")

@@ -20,15 +20,18 @@ management capabilities that can be deployed to AWS Fargate.
 - **10x More Operations**: Comprehensive endpoint coverage vs static configuration
 
 ### 🤖 OpenAI Integration
-- **Intelligent Conversations**: Natural language interface powered by OpenAI GPT models
+- **GPT-4o-mini Model**: Fast, cost-effective AI powered by OpenAI's latest mini model
+- **Intelligent Conversations**: Natural language interface with advanced reasoning
 - **Smart MCP Operations**: AI understands user intent and executes appropriate MCP operations
 - **Conversational Context**: Maintains conversation history for better interactions
+- **Model Flexibility**: Switch between GPT-4o-mini, GPT-4o, and other models
 - **API Endpoints**: RESTful endpoints for chat and intelligent query capabilities
 
 ### 💬 Interactive Interfaces
 - **Interactive CLI**: Full-featured command-line interface with streaming responses
 - **Web Interface**: Modern web-based chat interface for browser interaction
-- **Session Management**: Automatic conversation saving and restoration
+- **Unified Database**: Both interfaces use the same MCP database and authentication
+- **Session Management**: User-specific conversation saving and restoration
 - **Real-time Streaming**: Live response streaming for immediate feedback
 - **Tab Completion**: Smart completion for commands and tool names
 
@@ -76,18 +79,64 @@ management capabilities that can be deployed to AWS Fargate.
 
 6. **Try the interactive agents:**
    ```bash
-   # Interactive CLI
+   # Interactive CLI (uses MCP database authentication)
    python interactive_agent.py
    
-   # Web interface (in separate terminal)
+   # Web interface (in separate terminal, same database)
    python web_interface.py
+   # Visit http://localhost:8080 and login with johndoe/secret
    
    # Demo all features
    python demo_agent_usage.py
+   
+   # Test unified database access
+   python test_unified_database.py
    ```
 
 The database path can be configured via the `DATABASE_PATH` environment variable.
 If not set, it defaults to `mcp.db` in the working directory.
+
+## AI Model Configuration
+
+The system now uses **GPT-4o-mini** as the default model for optimal performance and cost:
+
+### 🤖 **Current Model**: GPT-4o-mini
+- **Performance**: ~2x faster than GPT-4 for most tasks
+- **Cost**: Significantly lower cost per token
+- **Quality**: High-quality responses for interactive chat and MCP operations
+- **Availability**: Latest OpenAI model with improved efficiency
+
+### 🔄 **Model Switching**
+- **CLI**: Use `/model <name>` to switch models
+- **Available models**: gpt-4o-mini, gpt-4o, gpt-4-turbo, gpt-3.5-turbo
+- **Session persistent**: Model choice saves across CLI sessions
+- **Web interface**: Uses gpt-4o-mini by default
+
+### 💡 **Model Recommendations**
+- **gpt-4o-mini**: Best for interactive chat and general tasks (default)
+- **gpt-4o**: Use for complex reasoning tasks
+- **gpt-3.5-turbo**: Fallback for basic interactions
+
+## Unified Database System
+
+Both the CLI and web interfaces now use the **same MCP database** for authentication and operations:
+
+### 🔑 **Shared Authentication**
+- Both interfaces authenticate against the same user database
+- Same JWT token system for both CLI and web
+- Consistent user management across interfaces
+
+### 💾 **Database Consistency** 
+- **User accounts**: Shared between CLI and web interface
+- **MCP operations**: Both use identical API endpoints
+- **Tool discovery**: Same tool set available in both interfaces
+- **Conversation history**: Interface-specific but user-isolated
+
+### 🔄 **Cross-Interface Benefits**
+- Login with `johndoe/secret` or `alice/wonderland` in both interfaces
+- MCP operations executed through web interface affect same database as CLI
+- Consistent tool availability and functionality
+- Unified session management per user
 
 ## Authentication
 
@@ -146,6 +195,8 @@ Experience the AI-powered interactive agents:
 **CLI Interface:**
 ```bash
 python interactive_agent.py
+# Default: GPT-4o-mini model
+# Use /model gpt-4o to switch models
 ```
 Features: Real-time chat, streaming responses, command system, tab completion
 
@@ -153,8 +204,10 @@ Features: Real-time chat, streaming responses, command system, tab completion
 ```bash
 python web_interface.py
 # Visit http://localhost:8080
+# Login with johndoe/secret or alice/wonderland
+# Uses GPT-4o-mini by default
 ```
-Features: Modern web UI, session management, real-time messaging
+Features: Modern web UI, MCP database authentication, real-time messaging
 
 **Feature Demo:**
 ```bash

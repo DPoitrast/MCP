@@ -121,6 +121,7 @@ async def demo_streaming():
         print("✓ Testing streaming response...")
         result = agent.chat_with_openai(
             user_message="Say hello in exactly 10 words",
+            model="gpt-4o-mini",
             stream=True
         )
         

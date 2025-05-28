@@ -306,7 +306,7 @@ class MCPAgent:
         user_message: str, 
         conversation_history: List[Dict[str, str]] = None,
         system_prompt: str = None,
-        model: str = "gpt-3.5-turbo",
+        model: str = "gpt-4o-mini",
         stream: bool = False
     ) -> Dict[str, Any]:
         """
@@ -440,7 +440,7 @@ Current conversation context: The user is interacting with an MCP system that ma
             user_message=user_request,
             conversation_history=conversation_history,
             system_prompt=system_prompt,
-            model="gpt-3.5-turbo"
+            model="gpt-4o-mini"
         )
         
         assistant_response = chat_response["response"]

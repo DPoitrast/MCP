@@ -62,9 +62,11 @@ class InteractiveAgent:
             '/smart': self._cmd_smart_mode,
             '/stream': self._cmd_toggle_streaming,
             '/session': self._cmd_session_info,
+            '/model': self._cmd_model_info,
         }
         
         self.chat_mode = True  # Default to chat mode
+        self.current_model = "gpt-4o-mini"  # Default model
         
         # Load previous session if available
         self._load_session()
@@ -207,6 +209,7 @@ MCP OPERATIONS:
 
 SESSION MANAGEMENT:
   /session          - Show session information
+  /model [name]     - Show/change OpenAI model (default: gpt-4o-mini)
   /login            - Re-authenticate with the server
   /save <file>      - Save conversation to file
   /load <file>      - Load conversation from file
@@ -366,11 +369,47 @@ Just type normally to chat with the agent!
 📱 Session Information:
 - Messages in history: {len(self.conversation_history)}
 - Mode: {'Chat' if self.chat_mode else 'Smart'}
+- Model: {self.current_model}
 - Streaming: {'enabled' if self.enable_streaming else 'disabled'}
 - Session file: {self.session_file}
 - Auto-save: enabled
         """
         return session_info.strip()
+    
+    def _cmd_model_info(self, args: str = "") -> str:
+        """Show or change the current model."""
+        args = args.strip()
+        
+        if not args:
+            # Show current model info
+            available_models = [
+                "gpt-4o-mini",
+                "gpt-4o", 
+                "gpt-4-turbo",
+                "gpt-3.5-turbo"
+            ]
+            
+            model_info = f"""
+🤖 Model Information:
+- Current model: {self.current_model}
+- Available models: {', '.join(available_models)}
+
+Usage: /model <model_name> to switch models
+Example: /model gpt-4o
+            """
+            return model_info.strip()
+        else:
+            # Change model
+            new_model = args.lower()
+            
+            # Simple validation
+            valid_models = ["gpt-4o-mini", "gpt-4o", "gpt-4-turbo", "gpt-3.5-turbo"]
+            if new_model in valid_models:
+                old_model = self.current_model
+                self.current_model = new_model
+                return f"✓ Model changed from {old_model} to {new_model}"
+            else:
+                return f"❌ Invalid model: {new_model}. Available: {', '.join(valid_models)}"
     
     async def _process_command(self, user_input: str) -> str:
         """Process a command."""
@@ -399,6 +438,7 @@ Just type normally to chat with the agent!
                     user_message=user_input,
                     conversation_history=self.conversation_history,
                     system_prompt="You are a helpful assistant for an MCP (Model Context Protocol) system. Be conversational and helpful.",
+                    model=self.current_model,
                     stream=self.enable_streaming
                 )
                 
