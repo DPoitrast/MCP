@@ -185,3 +185,16 @@ This architecture supports easy extension:
 - API responses now include pagination metadata
 - Authentication enhanced but backwards compatible
 - All existing functionality preserved with improvements
+
+## Key Performance Indicators
+
+| KPI | Target | Measurement & Tooling | Notes |
+| --- | --- | --- | --- |
+| Data-ingestion latency (P95) | ≤ 5 min edge → data-lake | Prometheus histogram `ingest_latency_seconds`; Grafana alert if > 5 min for 10 min | Ensures near-real-time analytics viability |
+| Platform uptime | ≥ 99.5 % monthly | AWS ALB uptime + `/healthz` probe | Scheduled maintenance ≤ 1 h/mo excluded |
+| Recovery Point Objective (RPO) | ≤ 5 min | Continuous S3 versioning & DynamoDB streams | Maximum tolerable data loss |
+| Recovery Time Objective (RTO) | ≤ 30 min | Terraform redeploy job + run-books | Time to full service restoration |
+| Audit-log retention | ≥ 7 years immutable | S3 Glacier Deep Archive; write-once bucket policy | Satisfies regulatory & IC security requirements |
+| Security SLA | Patch critical CVEs ≤ 7 days; high ≤ 30 days | Trivy/Bandit CI checks + GitHub Security Center | Automated Slack alerting |
+| Data error rate | < 1 % failed payloads/day | Counter `ingest_fail_total` in Prometheus | Failures auto-replay from queue |
+| API throughput | ≥ 1 000 msgs/min sustained | Quarterly Locust load test | Guarantees 10× farm expansion headroom |
