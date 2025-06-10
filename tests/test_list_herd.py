@@ -1,35 +1,15 @@
-import os
-import tempfile
+"""Test herd API endpoints."""
+
+import pytest
 from fastapi.testclient import TestClient
-
-fd, db_path = tempfile.mkstemp(suffix=".db")
-os.close(fd)
-os.environ["DATABASE_PATH"] = db_path
-
-from app.main import app
-from app.seed import seed
-
-client: TestClient
+from typing import Dict
 
 
-def setup_module(module):
-    seed()
-
-    global client
-    client = TestClient(app)
-
-
-def teardown_module(module):
-    if os.path.exists(db_path):
-        os.remove(db_path)
-
-
-def test_list_herd():
-    response = client.get(
-        "/api/v1/herd",
-        headers={"Authorization": "Bearer fake-super-secret-token"},
-    )
+def test_list_herd(test_client: TestClient, test_user_headers: Dict[str, str]):
+    """Test listing herds with proper authentication."""
+    response = test_client.get("/api/v1/herd", headers=test_user_headers)
     assert response.status_code == 200
+    
     data = response.json()
     assert isinstance(data, dict)
     assert "items" in data
@@ -44,3 +24,30 @@ def test_list_herd():
     herd_names = [herd["name"] for herd in data["items"]]
     assert "Alpha Farm" in herd_names
     assert "Beta Farm" in herd_names
+
+
+def test_list_herd_unauthorized(test_client: TestClient):
+    """Test listing herds without authentication."""
+    response = test_client.get("/api/v1/herd")
+    assert response.status_code == 401
+
+
+def test_list_herd_invalid_token(test_client: TestClient, invalid_token_headers: Dict[str, str]):
+    """Test listing herds with invalid token."""
+    response = test_client.get("/api/v1/herd", headers=invalid_token_headers)
+    assert response.status_code == 401
+
+
+def test_list_herd_pagination(test_client: TestClient, test_user_headers: Dict[str, str]):
+    """Test herd listing with pagination."""
+    response = test_client.get(
+        "/api/v1/herd", 
+        headers=test_user_headers,
+        params={"limit": 1, "skip": 0}
+    )
+    assert response.status_code == 200
+    
+    data = response.json()
+    assert len(data["items"]) == 1
+    assert data["limit"] == 1
+    assert data["skip"] == 0

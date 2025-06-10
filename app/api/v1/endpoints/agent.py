@@ -12,10 +12,21 @@ from ....models.user import AuthenticatedUserModel
 from ....schemas import ( # Added agent response schemas
     AgentToolInfo, AgentToolsListResponse, AgentStatusResponse
 )
-import sys
-import os
-sys.path.append(os.path.join(os.path.dirname(__file__), '../../../../..'))
-from agent.mcp_agent import MCPAgent
+
+# Proper import using Python package structure
+try:
+    from agent.mcp_agent import MCPAgent
+except ImportError:
+    # Fallback for development/testing environments
+    import sys
+    from pathlib import Path
+    
+    # Add the project root to the path only if needed
+    project_root = Path(__file__).parent.parent.parent.parent.parent
+    if str(project_root) not in sys.path:
+        sys.path.insert(0, str(project_root))
+    
+    from agent.mcp_agent import MCPAgent
 
 logger = logging.getLogger(__name__)
 
