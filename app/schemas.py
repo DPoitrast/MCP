@@ -95,6 +95,24 @@ class User(BaseModel):
     username: str = Field(..., description="Username")
     disabled: Optional[bool] = Field(False, description="Whether user is disabled")
 
+    class Config:
+        from_attributes = True
+
+
+class ProfileDetails(BaseModel):
+    """Detailed user profile information."""
+    user_type: Optional[str] = Field(None, description="Type of user account")
+    last_login: Optional[str] = Field(None, description="Last login timestamp as string")
+    permissions: list[str] = Field([], description="List of user permissions")
+
+    class Config:
+        from_attributes = True
+
+
+class UserProfile(User):
+    """User profile schema including detailed information."""
+    profile: ProfileDetails
+
 
 class UserInDB(User):
     """User schema for database storage."""
@@ -112,3 +130,76 @@ class MCPBroadcastRequest(BaseModel):
     """Schema for MCP broadcast operation requests."""
     message: str = Field(..., description="Message to broadcast")
     targets: Optional[list[str]] = Field(None, description="Target recipients")
+
+
+class MCPExecuteResponse(BaseModel):
+    """Schema for MCP execute operation responses."""
+    success: bool = Field(..., description="Whether the operation was successful")
+    operation: str = Field(..., description="Operation that was executed")
+    result: Optional[dict[str, any]] = Field(None, description="Result of the operation")
+    executed_by: str = Field(..., description="Username who executed the operation")
+
+
+class MCPBroadcastResult(BaseModel):
+    """Detailed result of a broadcast operation."""
+    message_id: str = Field(..., description="Unique ID for the broadcast message")
+    message: str = Field(..., description="The broadcasted message content")
+    targets: list[str] = Field(..., description="Intended targets of the broadcast")
+    delivered_count: int = Field(..., description="Number of targets message was delivered to")
+    failed_count: int = Field(..., description="Number of targets message failed to deliver to")
+    timestamp: datetime = Field(..., description="Timestamp of the broadcast") # Changed to datetime
+    broadcast_by: str = Field(..., description="Username who initiated the broadcast")
+
+
+class MCPBroadcastResponse(BaseModel):
+    """Schema for MCP broadcast operation responses."""
+    success: bool = Field(..., description="Whether the broadcast was successful")
+    broadcast_result: Optional[MCPBroadcastResult] = Field(None, description="Detailed result of the broadcast")
+
+
+class MCPModelInfo(BaseModel):
+    """Schema for individual MCP model information."""
+    id: str = Field(..., description="Unique ID of the model")
+    name: str = Field(..., description="Name of the model")
+    version: str = Field(..., description="Version of the model")
+    description: Optional[str] = Field(None, description="Description of the model")
+    capabilities: list[str] = Field([], description="Capabilities of the model")
+    status: str = Field(..., description="Status of the model (e.g., active, maintenance)")
+
+    class Config:
+        from_attributes = True
+
+
+class MCPModelsListResponse(BaseModel):
+    """Schema for the list of available MCP models."""
+    models: list[MCPModelInfo] = Field(..., description="List of available MCP models")
+    total_count: int = Field(..., description="Total number of models")
+    active_count: int = Field(..., description="Number of active models")
+    requested_by: str = Field(..., description="Username who requested the list")
+
+
+# Agent schemas
+class AgentToolInfo(BaseModel):
+    """Schema for individual agent tool information."""
+    name: str = Field(..., description="Name of the tool")
+    description: Optional[str] = Field(None, description="Description of the tool")
+    # Assuming a generic structure for parameters, adjust if more specific details are known
+    parameters: Optional[list[dict[str, any]]] = Field(None, description="Parameters the tool accepts")
+
+
+class AgentToolsListResponse(BaseModel):
+    """Schema for the list of available agent tools."""
+    tools: list[AgentToolInfo] = Field(..., description="List of available agent tools")
+    total_count: int = Field(..., description="Total number of tools")
+    requested_by: str = Field(..., description="Username who requested the list")
+
+
+class AgentStatusResponse(BaseModel):
+    """Schema for the agent status response."""
+    agent_initialized: bool = Field(..., description="Is the agent initialized?")
+    status: str = Field(..., description="Operational status of the agent (e.g., operational, error)")
+    openai_connected: Optional[bool] = Field(None, description="Is the agent connected to OpenAI?")
+    mcp_base_url: Optional[str] = Field(None, description="Base URL for MCP operations")
+    capabilities_discovered: Optional[bool] = Field(None, description="Have MCP capabilities been discovered?")
+    tools_available: Optional[int] = Field(None, description="Number of tools available to the agent")
+    error: Optional[str] = Field(None, description="Error message if status is 'error'")

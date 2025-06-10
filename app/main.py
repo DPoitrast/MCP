@@ -76,6 +76,7 @@ def create_application() -> FastAPI:
             content={
                 "detail": exc.message,
                 "error_code": exc.error_code,
+                "error_id": str(id(exc)), # Add unique error ID
                 "type": "business_error",
             },
         )

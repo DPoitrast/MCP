@@ -10,7 +10,8 @@ from ....core.security import CurrentUser
 from ....models.user import AuthenticatedUserModel
 from ....schemas import Herd, HerdCreate, HerdUpdate, HerdList
 from ....services import HerdService
-from ....utils.decorators import handle_service_exceptions, handle_not_found
+# Removed handle_service_exceptions from imports
+from ....utils.decorators import handle_not_found
 from ...dependencies import Database, HerdServiceDep
 
 logger = logging.getLogger(__name__)
@@ -19,7 +20,7 @@ router = APIRouter()
 
 
 @router.get("/herd", response_model=HerdList, tags=["herd"])
-@handle_service_exceptions("list_herds")
+# @handle_service_exceptions("list_herds") # Removed decorator
 async def list_herds(
     skip: int = Query(0, ge=0, description="Number of herds to skip"),
     limit: int = Query(100, ge=1, le=1000, description="Number of herds to return"),
@@ -48,7 +49,7 @@ async def list_herds(
 
 
 @router.get("/herd/stats", tags=["herd"])
-@handle_service_exceptions("get_herd_statistics")
+# @handle_service_exceptions("get_herd_statistics") # Removed decorator
 async def get_herd_statistics(
     db: Connection = Depends(Database),
     herd_service: HerdService = Depends(HerdServiceDep),
@@ -71,7 +72,7 @@ async def get_herd_statistics(
 
 
 @router.get("/herd/{herd_id}", response_model=Herd, tags=["herd"])
-@handle_service_exceptions("get_herd")
+# @handle_service_exceptions("get_herd") # Removed decorator
 @handle_not_found("Herd")
 async def get_herd(
     herd_id: int,
@@ -100,7 +101,7 @@ async def get_herd(
 
 
 @router.get("/herd/search/name", response_model=List[Herd], tags=["herd"])
-@handle_service_exceptions("search_herds_by_name")
+# @handle_service_exceptions("search_herds_by_name") # Removed decorator
 async def search_herds_by_name(
     name: str = Query(..., min_length=1, description="Name to search for"),
     db: Connection = Depends(Database),
@@ -127,7 +128,7 @@ async def search_herds_by_name(
 
 
 @router.get("/herd/search/location", response_model=List[Herd], tags=["herd"])
-@handle_service_exceptions("search_herds_by_location")
+# @handle_service_exceptions("search_herds_by_location") # Removed decorator
 async def search_herds_by_location(
     location: str = Query(..., min_length=1, description="Location to search for"),
     db: Connection = Depends(Database),
@@ -156,7 +157,7 @@ async def search_herds_by_location(
 @router.post(
     "/herd", response_model=Herd, status_code=status.HTTP_201_CREATED, tags=["herd"]
 )
-@handle_service_exceptions("create_herd")
+# @handle_service_exceptions("create_herd") # Removed decorator
 async def create_herd(
     herd_data: HerdCreate,
     db: Connection = Depends(Database),
@@ -183,7 +184,7 @@ async def create_herd(
 
 
 @router.put("/herd/{herd_id}", response_model=Herd, tags=["herd"])
-@handle_service_exceptions("update_herd")
+# @handle_service_exceptions("update_herd") # Removed decorator
 @handle_not_found("Herd")
 async def update_herd(
     herd_id: int,
@@ -214,7 +215,7 @@ async def update_herd(
 
 
 @router.delete("/herd/{herd_id}", status_code=status.HTTP_204_NO_CONTENT, tags=["herd"])
-@handle_service_exceptions("delete_herd")
+# @handle_service_exceptions("delete_herd") # Removed decorator
 @handle_not_found("Herd")
 async def delete_herd(
     herd_id: int,

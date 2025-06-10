@@ -9,7 +9,7 @@ This project has been restructured into a clean, production-ready architecture f
 app/
 ├── __init__.py
 ├── main.py                     # FastAPI application factory
-├── models.py                   # Domain models (dataclasses)
+├── models/                     # Domain models (Pydantic objects)
 ├── schemas.py                  # Pydantic models for API validation
 ├── seed.py                     # Database seeding script
 ├── api/                        # API layer

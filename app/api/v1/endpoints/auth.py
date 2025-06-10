@@ -8,7 +8,7 @@ from fastapi.security import OAuth2PasswordRequestForm
 
 from ....core.config import settings
 from ....core.security import authenticate_user, create_access_token, CurrentUser
-from ....schemas import Token, User
+from ....schemas import Token, User, UserProfile # Added UserProfile
 from ....models.user import AuthenticatedUserModel
 
 logger = logging.getLogger(__name__)
@@ -62,7 +62,7 @@ async def read_users_me(current_user: AuthenticatedUserModel = CurrentUser):
     return User(username=current_user.username, disabled=current_user.disabled)
 
 
-@router.get("/users/me/profile", tags=["authentication"])
+@router.get("/users/me/profile", response_model=UserProfile, tags=["authentication"]) # Added response_model
 async def read_user_profile(current_user: AuthenticatedUserModel = CurrentUser):
     """
     Get detailed current user profile.

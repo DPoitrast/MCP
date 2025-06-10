@@ -3,6 +3,8 @@
 import logging
 from typing import Optional
 
+from ..exceptions import UserNotFoundError, UserAlreadyExistsError # Import new exceptions
+
 logger = logging.getLogger(__name__)
 
 
@@ -42,7 +44,7 @@ class UserService:
     def create_user(self, username: str, hashed_password: str, disabled: bool = False) -> dict:
         """Create a new user."""
         if username in self._users_db:
-            raise ValueError(f"User '{username}' already exists")
+            raise UserAlreadyExistsError(username) # Use custom exception
         
         user_data = {
             "username": username,
@@ -56,7 +58,7 @@ class UserService:
     def update_user(self, username: str, **updates) -> Optional[dict]:
         """Update user information."""
         if username not in self._users_db:
-            return None
+            raise UserNotFoundError(username) # Use custom exception
         
         allowed_fields = {"hashed_password", "disabled"}
         filtered_updates = {k: v for k, v in updates.items() if k in allowed_fields}
