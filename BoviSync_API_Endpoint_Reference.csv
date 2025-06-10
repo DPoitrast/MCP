@@ -1,0 +1,14 @@
+Category,Endpoint,Method,Description,Scope
+Authentication,/auth/token/,POST,Gets an access token to authorize access to API endpoints.,N/A (Uses Basic Auth)
+Session,/session/herd/,GET,Returns the active herd for the current session.,(Authenticated)
+Session,/session/herd/,POST,Sets the active herd(s) for the current session.,(Authenticated)
+User,/user/herds/,GET,Returns a list of herds accessible to the authenticated OAuth client.,(Authenticated)
+Animal,/animal/list/,GET,Returns a list of animals in the herd for the current session.,animal:read
+Animal,/animal/data/,GET,Returns animal report item data (restricted to single-farm session only).,animal:read
+Animal,/animal/bulk/,GET,Returns bulk data for animals in the herd for the current session.,animal:read
+Event,/event/list/,GET,Returns a list of events in the herd (restricted to single-farm session only).,event:read
+Event,/event/meta/,GET,Returns information about event types.,event:read
+Event,/event/bulk/,GET,Returns a list of events in the herd for a specified month (single-farm session).,event:read
+Milk Test,/milk_test/data/,GET,"Returns a list of milk data (e.g., DHI) in the herd (single-farm session).",milktest:read
+Parlor Milk,/parlor_daily/data/,GET,Returns a list of parlor milk data in the herd (single-farm session).,parlor:read (inferred)
+Report,/report/animal/data/,GET,Returns animal report item data.,data:read
