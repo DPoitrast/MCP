@@ -1,40 +1,45 @@
 """Utilities for converting between domain models and schemas."""
 
-from typing import TypeVar, Type, List
+from typing import TypeVar, Type, List, Any
 
-from .. import models
-from ..schemas import Herd as HerdSchema
-
+# T represents the source domain model type
 T = TypeVar('T')
+# S represents the target Pydantic schema type
 S = TypeVar('S')
 
 
-def convert_domain_to_schema(domain_obj: models.Herd, schema_class: Type[HerdSchema]) -> HerdSchema:
+def convert_domain_to_schema(domain_obj: T, schema_class: Type[S]) -> S:
     """
-    Convert a domain model to a Pydantic schema.
+    Convert a domain model instance to a Pydantic schema instance.
+
+    Relies on Pydantic's `from_orm` or `model_validate` with `from_attributes=True`
+    being effective for the given types.
     
     Args:
-        domain_obj: Domain model instance
-        schema_class: Target Pydantic schema class
+        domain_obj: The source domain model instance (e.g., models.Herd).
+        schema_class: The target Pydantic schema class (e.g., schemas.Herd).
         
     Returns:
-        Converted schema instance
+        An instance of the target Pydantic schema.
     """
-    return schema_class.from_orm(domain_obj)
+    if domain_obj is None:
+        # Or handle as per desired behavior, e.g., raise ValueError
+        return None # type: ignore
+    return schema_class.from_orm(domain_obj) # type: ignore
 
 
 def convert_domain_list_to_schema(
-    domain_list: List[models.Herd], 
-    schema_class: Type[HerdSchema]
-) -> List[HerdSchema]:
+    domain_list: List[T],
+    schema_class: Type[S]
+) -> List[S]:
     """
-    Convert a list of domain models to Pydantic schemas.
+    Convert a list of domain model instances to a list of Pydantic schema instances.
     
     Args:
-        domain_list: List of domain model instances
-        schema_class: Target Pydantic schema class
+        domain_list: List of source domain model instances.
+        schema_class: Target Pydantic schema class.
         
     Returns:
-        List of converted schema instances
+        A list of target Pydantic schema instances.
     """
-    return [schema_class.from_orm(domain_obj) for domain_obj in domain_list]
+    return [schema_class.from_orm(domain_obj) for domain_obj in domain_list if domain_obj is not None] # type: ignore

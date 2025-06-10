@@ -41,3 +41,24 @@ class AuthenticationError(MCPException):
 
     def __init__(self, message: str = "Authentication failed"):
         super().__init__(message, "AUTHENTICATION_ERROR")
+
+
+class UserNotFoundError(MCPException):
+    """Raised when a user is not found."""
+
+    def __init__(self, username: str = None, user_id: int = None):
+        if username:
+            message = f"User with username '{username}' not found"
+        elif user_id:
+            message = f"User with ID {user_id} not found"
+        else:
+            message = "User not found"
+        super().__init__(message, "USER_NOT_FOUND")
+
+
+class UserAlreadyExistsError(MCPException):
+    """Raised when trying to create a user that already exists."""
+
+    def __init__(self, username: str):
+        message = f"User with username '{username}' already exists"
+        super().__init__(message, "USER_ALREADY_EXISTS")

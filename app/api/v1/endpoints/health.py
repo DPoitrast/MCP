@@ -4,6 +4,7 @@ import logging
 from fastapi import APIRouter, HTTPException, status
 
 from ....core.database import check_db_health
+from ....core.config import settings # Import settings
 
 logger = logging.getLogger(__name__)
 
@@ -34,7 +35,7 @@ async def health_check():
         health_status = {
             "status": "healthy",
             "database": "connected",
-            "version": "1.0.0",
+            "version": settings.version, # Use settings.version
         }
 
         logger.debug("Health check passed")

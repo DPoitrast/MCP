@@ -7,7 +7,7 @@ from typing import Dict, List, Optional, Any
 from .base import BaseRepository
 from .. import models
 from ..schemas import HerdCreate, HerdUpdate
-from ..exceptions import HerdNotFoundError
+from ..exceptions import HerdNotFoundError, DatabaseError # Import DatabaseError
 
 logger = logging.getLogger(__name__)
 
@@ -84,7 +84,10 @@ class HerdRepository(BaseRepository):
         # Retrieve the created herd
         created_herd = self.get_by_id(db, herd_id)
         if not created_herd:
-            raise ValueError("Failed to retrieve created herd")
+            # This indicates an unexpected state, as an insert succeeded but fetch failed.
+            err_msg = f"Failed to retrieve herd with ID {herd_id} immediately after creation."
+            logger.error(err_msg)
+            raise DatabaseError(operation="create_herd_post_fetch", original_error=RuntimeError(err_msg))
 
         logger.info(
             f"Created herd {herd_id}: {created_herd.name} at {created_herd.location}"

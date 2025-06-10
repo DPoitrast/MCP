@@ -98,9 +98,12 @@ async def get_current_user(token: str = Depends(oauth2_scheme)) -> Authenticated
     )
 
     # For backwards compatibility, still accept the hardcoded token in development
-    if settings.environment == "development" and token == "fake-super-secret-token":
-        logger.warning("Using development token - not for production!")
-        return AuthenticatedUserModel.development_user()
+    # IMPORTANT: This is a security risk. Commenting out for review.
+    # It's highly recommended to remove this and use standard authentication
+    # flows even in development, or implement a secure dev-only token issuer.
+    # if settings.environment == "development" and token == "fake-super-secret-token":
+    #     logger.warning("Using development token - NOT FOR PRODUCTION! This backdoor should be removed.")
+    #     return AuthenticatedUserModel.development_user()
 
     try:
         payload = verify_token(token)
@@ -128,12 +131,18 @@ async def get_current_user(token: str = Depends(oauth2_scheme)) -> Authenticated
 
 
 async def get_current_active_user(current_user: AuthenticatedUserModel = Depends(get_current_user)) -> AuthenticatedUserModel:
-    """Get current active user (wrapper for additional checks)."""
-    if current_user.disabled:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN, 
-            detail="User account is disabled"
-        )
+    """
+    Get current active user.
+    The 'active' (not disabled) check is performed in get_current_user.
+    This function primarily serves as a distinct dependency if needed,
+    or can be extended with further role/permission checks if necessary.
+    """
+    # The disabled check on the user model is already performed in get_current_user
+    # after fetching the user from the database.
+    # If current_user.disabled were True here due to some other logic after get_current_user
+    # and before this, then this check might be useful. But as is, it's redundant
+    # with the check performed on the source user data in get_current_user.
+    # For now, simply returning the user, assuming get_current_user is the source of truth for 'active'.
     return current_user
 
 

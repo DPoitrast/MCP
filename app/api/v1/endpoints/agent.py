@@ -9,6 +9,9 @@ from pydantic import BaseModel
 
 from ....core.security import CurrentActiveUser
 from ....models.user import AuthenticatedUserModel
+from ....schemas import ( # Added agent response schemas
+    AgentToolInfo, AgentToolsListResponse, AgentStatusResponse
+)
 import sys
 import os
 sys.path.append(os.path.join(os.path.dirname(__file__), '../../../../..'))
@@ -63,11 +66,16 @@ class AgentCapabilitiesResponse(BaseModel):
     mcp_tools: List[Dict[str, Any]]
     agent_info: Dict[str, Any]
 
+# Schemas for endpoints that were previously returning dicts
+# Already defined in app/schemas.py:
+# AgentToolsListResponse, AgentStatusResponse
+
 
 @router.post("/chat", response_model=ChatResponse, tags=["agent"])
 async def chat_with_agent(
     request: ChatRequest,
-    current_user: AuthenticatedUserModel = CurrentActiveUser
+    current_user: AuthenticatedUserModel = CurrentActiveUser,
+    agent: MCPAgent = Depends(get_agent) # Injected
 ):
     """
     Chat directly with the OpenAI-powered agent.
@@ -78,6 +86,7 @@ async def chat_with_agent(
     Args:
         request: Chat request containing message and conversation history
         current_user: Current authenticated user
+        agent: Injected MCPAgent instance
         
     Returns:
         ChatResponse: Agent's response and updated conversation history
@@ -85,7 +94,7 @@ async def chat_with_agent(
     logger.info(f"User '{current_user.username}' starting chat with agent")
     
     try:
-        agent = get_agent()
+        # agent = get_agent() # Removed, now injected
         
         result = agent.chat_with_openai(
             user_message=request.message,
@@ -113,7 +122,8 @@ async def chat_with_agent(
 async def intelligent_query(
     request: IntelligentQueryRequest,
     current_user: AuthenticatedUserModel = CurrentActiveUser,
-    authorization: str = Header(None)
+    authorization: str = Header(None),
+    agent: MCPAgent = Depends(get_agent) # Injected
 ):
     """
     Make an intelligent query that can trigger MCP operations.
@@ -125,6 +135,7 @@ async def intelligent_query(
         request: Query request containing natural language request
         current_user: Current authenticated user
         authorization: Bearer token for MCP operations
+        agent: Injected MCPAgent instance
         
     Returns:
         IntelligentQueryResponse: Agent's response with potential MCP results
@@ -132,7 +143,7 @@ async def intelligent_query(
     logger.info(f"User '{current_user.username}' making intelligent query")
     
     try:
-        agent = get_agent()
+        # agent = get_agent() # Removed, now injected
         
         # Extract token from authorization header
         token = None
@@ -169,7 +180,8 @@ async def intelligent_query(
 
 @router.get("/capabilities", response_model=AgentCapabilitiesResponse, tags=["agent"])
 async def get_agent_capabilities(
-    current_user: AuthenticatedUserModel = CurrentActiveUser
+    current_user: AuthenticatedUserModel = CurrentActiveUser,
+    agent: MCPAgent = Depends(get_agent) # Injected
 ):
     """
     Get information about the agent's capabilities.
@@ -179,6 +191,7 @@ async def get_agent_capabilities(
     
     Args:
         current_user: Current authenticated user
+        agent: Injected MCPAgent instance
         
     Returns:
         AgentCapabilitiesResponse: Agent capabilities and configuration
@@ -186,7 +199,7 @@ async def get_agent_capabilities(
     logger.info(f"User '{current_user.username}' requesting agent capabilities")
     
     try:
-        agent = get_agent()
+        # agent = get_agent() # Removed, now injected
         
         # Check OpenAI availability
         openai_available = agent.openai_client is not None
@@ -217,15 +230,17 @@ async def get_agent_capabilities(
         )
 
 
-@router.get("/tools", tags=["agent"])
+@router.get("/tools", response_model=AgentToolsListResponse, tags=["agent"]) # Added response_model
 async def list_available_tools(
-    current_user: AuthenticatedUserModel = CurrentActiveUser
+    current_user: AuthenticatedUserModel = CurrentActiveUser,
+    agent: MCPAgent = Depends(get_agent) # Injected
 ):
     """
     List all available MCP tools that the agent can use.
     
     Args:
         current_user: Current authenticated user
+        agent: Injected MCPAgent instance
         
     Returns:
         dict: Available MCP tools and their descriptions
@@ -233,7 +248,7 @@ async def list_available_tools(
     logger.info(f"User '{current_user.username}' requesting available tools")
     
     try:
-        agent = get_agent()
+        # agent = get_agent() # Removed, now injected
         tools = agent.get_available_tools()
         
         return {
@@ -250,15 +265,17 @@ async def list_available_tools(
         )
 
 
-@router.get("/status", tags=["agent"])
+@router.get("/status", response_model=AgentStatusResponse, tags=["agent"]) # Added response_model
 async def agent_status(
-    current_user: AuthenticatedUserModel = CurrentActiveUser
+    current_user: AuthenticatedUserModel = CurrentActiveUser,
+    agent: MCPAgent = Depends(get_agent) # Injected
 ):
     """
     Get the current status of the agent.
     
     Args:
         current_user: Current authenticated user
+        agent: Injected MCPAgent instance
         
     Returns:
         dict: Agent status information
@@ -266,23 +283,28 @@ async def agent_status(
     logger.info(f"User '{current_user.username}' requesting agent status")
     
     try:
-        agent = get_agent()
-        
-        status_info = {
-            "agent_initialized": True,
-            "openai_connected": agent.openai_client is not None,
-            "mcp_base_url": agent.base_url,
-            "capabilities_discovered": bool(agent.capabilities),
-            "tools_available": len(agent.get_available_tools()),
-            "status": "operational"
-        }
-        
+        # agent = get_agent() # This call itself could fail if MCPAgent init fails (Removed, now injected)
+
+        # Attempt to gather full status information
+        openai_connected = agent.openai_client is not None
+        tools_available = len(agent.get_available_tools()) # This could fail if capabilities not loaded
+
+        status_info = AgentStatusResponse(
+            agent_initialized=True, # If get_agent() succeeded, it's initialized
+            openai_connected=openai_connected,
+            mcp_base_url=agent.base_url,
+            capabilities_discovered=bool(agent.capabilities),
+            tools_available=tools_available,
+            status="operational"
+        )
         return status_info
         
     except Exception as e:
-        logger.error(f"Failed to get agent status for user '{current_user.username}': {e}")
-        return {
-            "agent_initialized": False,
-            "status": "error",
-            "error": str(e)
-        }
+        logger.error(f"Failed to get agent status for user '{current_user.username}': {e}", exc_info=True)
+        # Return a 503 status code, body will be auto-generated by FastAPI
+        # or we can provide a specific one if needed, but AgentStatusResponse is for success.
+        # For simplicity, let FastAPI handle the response for HTTPException.
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail=f"Agent status unavailable: {str(e)}"
+        )

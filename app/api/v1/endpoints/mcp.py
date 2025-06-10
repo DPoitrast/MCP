@@ -6,7 +6,10 @@ from typing import Dict, Any
 from fastapi import APIRouter, Depends, HTTPException, status
 
 from ....core.security import CurrentActiveUser
-from ....schemas import MCPExecuteRequest, MCPBroadcastRequest
+from ....schemas import ( # Added new response schemas
+    MCPExecuteRequest, MCPBroadcastRequest,
+    MCPExecuteResponse, MCPBroadcastResponse, MCPModelsListResponse
+)
 from ....models.user import AuthenticatedUserModel
 
 logger = logging.getLogger(__name__)
@@ -14,7 +17,7 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
-@router.post("/execute", tags=["mcp"])
+@router.post("/execute", response_model=MCPExecuteResponse, tags=["mcp"]) # Added response_model
 async def execute_operation(
     request: MCPExecuteRequest,
     current_user: AuthenticatedUserModel = CurrentActiveUser
@@ -80,7 +83,7 @@ async def execute_operation(
         )
 
 
-@router.post("/broadcast", tags=["mcp"])
+@router.post("/broadcast", response_model=MCPBroadcastResponse, tags=["mcp"]) # Added response_model
 async def broadcast_message(
     request: MCPBroadcastRequest,
     current_user: AuthenticatedUserModel = CurrentActiveUser
@@ -128,7 +131,7 @@ async def broadcast_message(
         )
 
 
-@router.get("/models", tags=["mcp"])
+@router.get("/models", response_model=MCPModelsListResponse, tags=["mcp"]) # Added response_model
 async def list_models(current_user: AuthenticatedUserModel = CurrentActiveUser):
     """
     List available MCP models.

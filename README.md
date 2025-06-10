@@ -142,8 +142,7 @@ Both the CLI and web interfaces now use the **same MCP database** for authentica
 
 ### Available Users
 - **johndoe** / **secret** - Active user account
-- **alice** / **wonderland** - Active user account  
-- **Development token**: `fake-super-secret-token` (development mode only)
+- **alice** / **wonderland** - Active user account
 
 ### OAuth2 Flow
 ```bash
@@ -268,7 +267,7 @@ pytest tests/test_list_herd.py -v
 docker build -t mcp .
 
 # Run container
-docker run -p 8000:8000 mcp
+docker run -p 8000:80 mcp
 ```
 
 ## Infrastructure
