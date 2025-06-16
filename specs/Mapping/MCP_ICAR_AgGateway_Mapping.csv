@@ -1,0 +1,15 @@
+MCP_Field,Description,BoviSync_Field,ICAR_ADE_Tag,AgGateway_ADAPT_Object,Notes
+animal_id,Unique animal identifier,animalId,AnimalIdentifier,AnimalIdentifier,Exact one-to-one match
+lactation_number,Count of completed lactations,lactation,lactationNumber,LactationNumber,Ensure integer
+birth_date,Date of birth,birthDate,BirthDate,BirthDate,ISO-8601 format
+breed_code,Breed code (NAAB),breedCode,BreedCode,Breed,ICAR & ADAPT use same code list
+milk_kg,Daily milk yield (kg),milkKg,MilkYield,MilkProduction,Convert lbs → kg if needed
+fat_percent,Milk fat percentage,fatPct,FatPercent,MilkComponent,Fat; identical semantics
+protein_percent,Milk protein percentage,proteinPct,ProteinPercent,MilkComponent,Protein
+somatic_cell_count,SCC (cells/mL),scc,SCC,SCC,ICAR unit is 1000 cells/mL
+pregnancy_status,Pregnancy status flag,pregStatus,PregnancyStatus,PregnancyStatus,Boolean Y/N vs enum
+pregnancy_check_date,Date of last preg check,pregCheckDate,PregnancyCheckDate,ReproductionEvent,ICAR optional
+event_type,"Event category (e.g., calving)",eventType,EventCode,EventType,Map BoviSync codes to ICAR enums
+event_date,Event occurrence date,eventDate,EventDate,EventDate,ISO-8601
+body_condition_score,BCS (1–5 scale),bcs,BodyConditionScore,BodyCondition,Scale alignment required
+health_treatment,Treatment code,treatmentCode,TreatmentCode,HealthEvent,Needs code translation
